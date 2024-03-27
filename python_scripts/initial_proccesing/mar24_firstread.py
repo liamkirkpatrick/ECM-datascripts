@@ -47,8 +47,11 @@ flag_dict = {'AC Collect Speed: ':'AC_col_sp',
 'X max Position (raw - not laser corrected): ': 'xmax'
     }
 
-#
-extra_headers = ['time','core','section','face','ACorDC']
+#header line
+hline = 'Y_dimension(mm),X_dimension(mm),Button,AC,DC,True_depth(m)'
+
+# extra headers for dataframe
+extra_headers = ['time','core','section','face','ACorDC','header','filename']
 
 #%% Create / read in csv with info
 
@@ -64,6 +67,9 @@ if os.path.exists(path_to_data+metadata_file):
     # Read the CSV file into a pandas dataframe
     df = pd.read_csv(path_to_data+metadata_file)
     
+    # rearange so the columns I want are at the front
+    df = df[headers]
+    
 else:
     df = pd.DataFrame(columns=headers)
 
@@ -74,6 +80,7 @@ for date in dates:
     folder_path = path_to_raw + date
     # Check if the folder exists
     if os.path.exists(folder_path) and os.path.isdir(folder_path):
+
         # Get the list of all .txt files in the folder and add their paths to the txt_files list
         txt_files.extend([os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.endswith('.txt')])
 
@@ -93,36 +100,39 @@ for f in txt_files:
         
         cnt = 0
         flags = list(flag_dict.keys())
-        while cnt<len(flag_dict.keys()):
-            for line in file:
-                for flag in flags:
-                    if flag in line:
-                        flags.remove(flag)
-                        vals.append(line[len(flag):-6])
-                        cnt+=1
-                        
-            # on last line in file, check for AC or dc
-            lp = line.split(',')
-            if lp[3]=='--':
-                ACorDC = 'AC'
-                print('AC')
-            elif lp[4]=='--':
-                ACorDC = 'DC'
-                print('DC')
-            else:
-                print("ERROR - not AC or DC")
-                ACorDC = 'ERROR'
-        
+        lcnt = 0
+        for index,line in enumerate(file,1):
+            for flag in flags:
+                if flag in line:
+                    flags.remove(flag)
+                    vals.append(line[len(flag):-6])
+            if hline in line:
+                header = index
+            
                     
-        
+        # on last line in file, check for AC or dc
+        lp = line.split(',')
+        if lp[4]=='--':
+            ACorDC = 'AC'
+            print('AC')
+        elif lp[3]=='--':
+            ACorDC = 'DC'
+            print('DC')
+        else:
+            print("ERROR - not AC or DC")
+            ACorDC = 'ERROR'
+               
     # now add on extra headers not in the flags dict
     path = f.split('/')
     parts = path[-1].split('-')
     vals.append(parts[0]+'-'+parts[1]+'-'+parts[2]+'-'+parts[3]+'-'+parts[4])# time
     vals.append(parts[5]) # core
+    section = parts[6]
     vals.append(parts[6]) # section
     vals.append(parts[7][:-4]) # face
     vals.append(ACorDC)
+    vals.append(header)
+    vals.append(f)
     
     # add to df
     data_dict = dict(zip(headers,vals))
@@ -140,9 +150,36 @@ for f in front:
 df = df[h]
 
 # drop duplicates (includes time, so only drops duplicates of the SAME RUN)
-df.drop_duplicates(subset=front,keep='last')
+df = df.drop_duplicates(subset='time')
+
+# sort values
+df = df.sort_values(['core','section','face','ACorDC'], ascending=[True,True,True,True])
 
 # save
 df.to_csv(path_to_data+metadata_file)
 
+#%% Save CSV with edited depth
+
+
+# loop through all rows in dataframe 
+for index,row in df.iterrows():
+    
+    
+    # read in raw data
+    raw = pd.read_csv(row['filename'],header = row['header']-1)
+    
+    # rename AC/DC to meas
+    raw['meas'] = raw[row['ACorDC']]
+    raw = raw.drop(['AC', 'DC'], axis=1)
+
+    # convert x to depth
+    raw['True_depth(m)'] = row['idx_abs'] + (row['xmax'] - row['idx1_raw'] - raw['X_dimension(mm)']) / 1000
+    
+    # drop X dimension
+    raw = raw.drop(['X_dimension(mm)'],axis=1)
+    
+    fname = row['core']+'-'+row['section']+'-'+row['face']+'-'+row['ACorDC']+'.csv'
+    
+    raw.to_csv(path_to_data+row['core']+'/'+fname,index=False)
+    
         

@@ -20,7 +20,6 @@ import os
 
 path_to_data = '../../data/'
 path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
-path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot/'
 metadata_file = 'metadata.csv'
 
 dates = ['2024-03-19','2024-03-20','2024-03-21','2024-03-22']

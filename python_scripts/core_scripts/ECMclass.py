@@ -43,7 +43,6 @@ class ECM:
         # open core csv
         fname = self.core+'-'+self.section+'-'+self.face+'-'+self.ACorDC+'.csv'
         raw = pd.read_csv(path_to_data+self.core+'/'+fname)
-        print(raw)
         
         # assign vectors
         self.meas = raw['meas'].to_numpy()
@@ -149,20 +148,3 @@ if __name__ == "__main__":
     
     test.smooth(1)
     
-    # print(ACtest.core)
-    
-    # # test spacing between ac points
-    # vec = ACtest.depth[ACtest.y==ACtest.y_vec[0]]
-    # ACdist = []
-    # for i in range(len(vec)-1):
-    #     ACdist.append(vec[i+1]-vec[i])
-        
-    # DCtest = ECM('alhic2201','10_1','t','DC')
-    
-    # print(ACtest.core)
-    
-    # # test spacing between ac points
-    # vec = DCtest.depth[DCtest.y==DCtest.y_vec[0]]
-    # DCdist = []
-    # for i in range(len(vec)-1):
-    #     DCdist.append(vec[i+1]-vec[i])

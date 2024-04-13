@@ -51,6 +51,9 @@ class ECM:
         self.depth = raw['True_depth(m)'].to_numpy()
         self.y_vec = np.unique(self.y)
         
+        # assign status
+        self.issmoothed = False
+        
     def smooth(self,window):
         # takes as input smoothing window (in mm)
         
@@ -107,6 +110,8 @@ class ECM:
         self.button_s = np.flip(np.array(button_smooth))
         self.y_s = np.flip(np.array(y_smooth))
         
+        self.issmoothed = True
+        
     def rem_ends(self,clip):
         
         # convert clip to m
@@ -135,6 +140,28 @@ class ECM:
             self.y_s = self.y_s[idx]
             self.button_s = self.button_s[idx]
             self.depth_s = self.depth_s[idx]
+            
+    
+    # normalize outside magnitude to match inner tracks
+    def norm_outside(self):
+                
+        # calculate average accross main track
+        norm_idx1 = self.y>self.y_vec[0]
+        norm_idx2 = self.y<self.y_vec[-1]
+        norm_idx = norm_idx1*norm_idx2
+        norm = np.mean(self.meas[norm_idx])
+        
+        # now loop through each outside track
+        for ytrack in [self.y_vec[0],self.y_vec[-1]]:
+            track_idx = self.y == ytrack
+            track_ave = np.mean(self.meas[track_idx])
+            self.meas[track_idx] = self.meas[track_idx] * norm / track_ave
+            if self.issmoothed:
+                strack_idx = self.y_s == ytrack
+                self.meas_s[strack_idx] = self.meas_s[strack_idx] * norm / track_ave
+                
+            print(norm/track_ave)
+        
         
 #%% Test
 
@@ -147,4 +174,6 @@ if __name__ == "__main__":
     test.rem_ends(1)
     
     test.smooth(1)
+    
+    test.norm_outside()
     

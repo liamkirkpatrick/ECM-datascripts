@@ -36,8 +36,8 @@ path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot/
 metadata_file = 'metadata.csv'
 
 # ONE BIG PLOT
-onebigplot = True
-indplots = False
+onebigplot = False
+indplots = True
 
 #%% Read in metadata and import data
 
@@ -61,6 +61,7 @@ for index,row in meta.iterrows():
     data_item = ECM(core,section,face,ACorDC)
     data_item.rem_ends(10)
     data_item.smooth(window)
+    data_item.norm_outside
     data.append(data_item)
     
     cores.append(core)
@@ -245,7 +246,7 @@ for sec in unique(sections):
         # applies to all
         for a in [ax[0],ax[1],ax[3],ax[4]]:
             a.set_ylabel('Depth (m)')
-            a.set_xlabel('Distance From Center (mm)')
+            a.set_xlabel('Distance From Center (mm)',fontsize=6)
             a.set_ylim([dmax, dmin])
             
             
@@ -300,6 +301,7 @@ for sec in unique(sections):
         # save figure
         fname = path_to_figures +'alhic2201-'+sec+'.png'
         fig.savefig(fname,bbox_inches='tight')
+        plt.close(fig)
     
     if onebigplot:
         for a,data_face in zip([ax2[0],ax2[1],ax2[3],ax2[4]],[AC_r,AC_t,DC_r,DC_t]):

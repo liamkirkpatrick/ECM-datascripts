@@ -22,7 +22,8 @@ path_to_data = '../../data/'
 path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
 metadata_file = 'metadata.csv'
 
-dates = ['2024-03-19','2024-03-20','2024-03-21','2024-03-22']
+dates = ['2024-03-19','2024-03-20','2024-03-21','2024-03-22','2024-04-08',
+         '2024-04-09','2024-04-10','2024-04-11','2024-04-12']
 
 # set flags in file and corresponding header in master csv
 flag_dict = {'AC Collect Speed: ':'AC_col_sp',
@@ -133,6 +134,9 @@ for f in txt_files:
     vals.append(header)
     vals.append(f)
     
+    # Now, for alhic2302, look at the 
+    
+    
     # add to df
     data_dict = dict(zip(headers,vals))
     df = pd.concat([df,pd.DataFrame([data_dict])], ignore_index=True)
@@ -172,7 +176,7 @@ for index,row in df.iterrows():
     raw = raw.drop(['AC', 'DC'], axis=1)
 
     # convert x to depth
-    raw['True_depth(m)'] = row['idx_abs'] + (row['xmax'] - row['idx1_raw'] - raw['X_dimension(mm)']) / 1000
+    raw['True_depth(m)'] = float(row['idx_abs']) + (float(row['xmax']) - float(row['idx1_raw']) - raw['X_dimension(mm)']) / 1000
     
     # drop X dimension
     raw = raw.drop(['X_dimension(mm)'],axis=1)

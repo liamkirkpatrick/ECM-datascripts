@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Fri Mar 29 15:15:03 2024
 
-Angle Calculations on ALHIC2201
+
+Angle Calculations on ALHIC2302
 
 @author: Liam
 """
@@ -31,20 +29,21 @@ from ECMclass import ECM
 #%% User Inputs
 
 # smoothing window, mm
-window = 10
+window = 20
 
 # paths
 path_to_data = '../../data/'
-path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
-path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot_2201/'
+path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot/'
 metadata_file = 'metadata.csv'
 
 # Correlation
 # distance over which to complete correlation comparison
-comp_range = 0.3
+comp_range = 0.20
 
 # depth interval to complete correlation comparison
-comp_int = 0.01
+comp_int = 0.001
+
+score_floor = 0.75
 
 # spacing of line that we interpolate onto
 interp_int = 0.00025
@@ -53,7 +52,7 @@ interp_int = 0.00025
 plot = True
 
 # set angles to cycle through
-ang = 70
+ang = 75
 ang_res = 5 #fraction of angle
 test_angle = np.linspace(-ang,ang,2*ang*ang_res+1)
 slopes = np.tan(test_angle * np.pi/180)
@@ -71,21 +70,25 @@ ACorDCs = []
 for index,row in meta.iterrows():
     
     core = row['core']
-    section = row['section']
-    face = row['face']
-    ACorDC = row['ACorDC']
     
-    print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
+    if core == 'alhic2302':
+
+        
+        section = row['section']
+        face = row['face']
+        ACorDC = row['ACorDC']
+        
+        print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
     
-    data_item = ECM(core,section,face,ACorDC)
-    data_item.rem_ends(10)
-    data_item.smooth(window)
-    data.append(data_item)
-    
-    cores.append(core)
-    sections.append(section)
-    faces.append(face)
-    ACorDCs.append(ACorDC)
+        data_item = ECM(core,section,face,ACorDC)
+        data_item.rem_ends(10)
+        data_item.smooth(window)
+        data.append(data_item)
+        
+        cores.append(core)
+        sections.append(section)
+        faces.append(face)
+        ACorDCs.append(ACorDC)
 
 sec = set(sections)
 
@@ -281,13 +284,13 @@ for data_face in data:
         pbar.close()
             
     # save in the right place
-    if data_face.core=='alhic2201':
+    if data_face.core=='alhic2302':
         if data_face.ACorDC == 'AC':
             if data_face.face == 't':
                 top_AC_angle.extend(angle)
                 top_AC_angledepth.extend(angle_depth)
                 top_AC_anglescore.extend(score_list)
-            if data_face.face == 'r':
+            if data_face.face == 'l':
                 right_AC_angle.extend(angle)
                 right_AC_angledepth.extend(angle_depth)
                 right_AC_anglescore.extend(score_list)              
@@ -296,7 +299,7 @@ for data_face in data:
                 top_DC_angle.extend(angle)
                 top_DC_angledepth.extend(angle_depth)
                 top_DC_anglescore.extend(score_list)
-            if data_face.face == 'r':
+            if data_face.face == 'l':
                 right_DC_angle.extend(angle)
                 right_DC_angledepth.extend(angle_depth)
                 right_DC_anglescore.extend(score_list)
@@ -326,7 +329,7 @@ for d,a2,s in zip(top_AC_angledepth,top_AC_angle,top_AC_anglescore):
     
         idx = find_index(right_AC_angledepth,d)
         
-        if idx != None and right_AC_anglescore[idx]>0.90:
+        if idx != None and right_AC_anglescore[idx]>score_floor and s>score_floor:
             
             # assign depth
             true_AC_angledepth.append(d)
@@ -339,10 +342,15 @@ for d,a2,s in zip(top_AC_angledepth,top_AC_angle,top_AC_anglescore):
             
             # calc true dip
             true = np.arctan(np.tan(a1 * np.pi/180) / np.sin((90-eps)*np.pi/180))* 180/np.pi
+           
+            if true<0:
+                eps = eps+180
+                true = true * -1
             
             true_AC_angle.append(true)
             true_AC_strike.append(eps)
             
+
             
 true_DC_angledepth = []
 true_DC_angle = []
@@ -354,7 +362,7 @@ for d,a2,s in zip(top_DC_angledepth,top_DC_angle,top_DC_anglescore):
     
         idx = find_index(right_DC_angledepth,d)
         
-        if idx != None and right_DC_anglescore[idx]>0.90:
+        if idx != None and right_DC_anglescore[idx]>score_floor and s>score_floor:
             
             # assign depth
             true_DC_angledepth.append(d)
@@ -368,60 +376,79 @@ for d,a2,s in zip(top_DC_angledepth,top_DC_angle,top_DC_anglescore):
             # calc true dip
             true = np.arctan(np.tan(a1 * np.pi/180) / np.sin((90-eps)*np.pi/180))* 180/np.pi
             
+            if true<0:
+                eps = eps+180
+                true = true * -1
+            
             true_DC_angle.append(true)
             true_DC_strike.append(eps)
             
 
 #%% Plot all
 
-fig, axs = plt.subplots(1,4,figsize=(12,6),dpi=100)
+fig, axs = plt.subplots(1,4,figsize=(12,9),dpi=100)
 
-fig.suptitle('ALHIC2201 Layer Orientations')
+fig.suptitle('ALHIC2302 Layer Orientations')
 
 # for all axis
 for ax in axs:
     ax.grid()
     ax.set_ylabel('Depth (m)')
-    ax.set_ylim([25,0])
+    ax.set_ylim([45,15])
     ax.set_xlim([min(test_angle),max(test_angle)])
 
-axs[3].set_xlim([-180,180])
+axs[3].set_xlim([-360,360])
+axs[2].set_xlim(0,90)
     
-axs[0].set_title('Right Face')
+axs[0].set_title('Left Face')
 for i in range(len(right_AC_angle)):
-    if right_AC_anglescore[i] >0.90:
-        axs[0].plot(right_AC_angle[i],right_AC_angledepth[i],'r.',label='AC')
+    if right_AC_anglescore[i] >score_floor:
+        axs[0].plot(right_AC_angle[i],right_AC_angledepth[i],'r.',label='AC - high confidence')
     else:
-        axs[0].plot(right_AC_angle[i],right_AC_angledepth[i],'k.',label='AC')
+        axs[0].plot(right_AC_angle[i],right_AC_angledepth[i],'k*',label='AC - poor confidence')
 for i in range(len(right_DC_angle)):
-    if right_DC_anglescore[i] >0.90:
-        axs[0].plot(right_DC_angle[i],right_DC_angledepth[i],'b.',label='DC')
+    if right_DC_anglescore[i] >score_floor:
+        axs[0].plot(right_DC_angle[i],right_DC_angledepth[i],'b.',label='DC - high confidence')
     else:
-        axs[0].plot(right_DC_angle[i],right_DC_angledepth[i],'k.',label='DC')
+        axs[0].plot(right_DC_angle[i],right_DC_angledepth[i],'k*',label='DC - poor confidence')
 
 axs[1].set_title('Top Face')
 for i in range(len(top_AC_angle)):
-    if top_AC_anglescore[i] >0.90:
-        axs[1].plot(top_AC_angle[i],top_AC_angledepth[i],'r.',label='AC')
+    if top_AC_anglescore[i] >score_floor:
+        axs[1].plot(top_AC_angle[i],top_AC_angledepth[i],'r.',label='AC - high confidence')
     else:
-        axs[1].plot(top_AC_angle[i],top_AC_angledepth[i],'k.',label='AC')
+        axs[1].plot(top_AC_angle[i],top_AC_angledepth[i],'k*',label='poor confidence')
 for i in range(len(top_DC_angle)):
-    if top_DC_anglescore[i] >0.90:
-        axs[1].plot(top_DC_angle[i],top_DC_angledepth[i],'b.',label='DC')
+    if top_DC_anglescore[i] >score_floor:
+        axs[1].plot(top_DC_angle[i],top_DC_angledepth[i],'b.',label='DC - high confidence')
     else:
-        axs[1].plot(top_DC_angle[i],top_DC_angledepth[i],'k.',label='AC')
+        axs[1].plot(top_DC_angle[i],top_DC_angledepth[i],'k*',label='DC - poor confidence')
         
 
 
 
+handles, labels = axs[1].get_legend_handles_labels()
+by_label = dict(zip(labels, handles))
+axs[1].legend(by_label.values(), by_label.keys())
+
+handles, labels = axs[0].get_legend_handles_labels()
+by_label = dict(zip(labels, handles))
+axs[0].legend(by_label.values(), by_label.keys())
 
 axs[2].set_title('True Dip')
 axs[2].plot(true_AC_angle,true_AC_angledepth,'r.',label='AC')
 axs[2].plot(true_DC_angle,true_DC_angledepth,'b*',label='DC')
+axs[2].legend()
 
 axs[3].set_title('Orientation')
 axs[3].plot(true_AC_strike,true_AC_angledepth,'r.',label='AC')
 axs[3].plot(true_DC_strike,true_DC_angledepth,'b*',label='DC')
+axs[3].legend()
+
 
 
 plt.tight_layout()
+
+
+
+

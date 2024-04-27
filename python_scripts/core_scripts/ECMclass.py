@@ -97,7 +97,7 @@ class ECM:
                 
                 # save values
                 depth_smooth.append(d)
-                meas_smooth.append(np.mean(mtrack[didx]))
+                meas_smooth.append(np.median(mtrack[didx]))
                 y_smooth.append(y)
                 if sum(btrack[didx])>0:
                     button_smooth.append(1)
@@ -161,6 +161,26 @@ class ECM:
                 self.meas_s[strack_idx] = self.meas_s[strack_idx] * norm / track_ave
                 
             print(norm/track_ave)
+            
+    # normalize all tracks
+    def norm_all(self):
+        
+        # loop through all tracks
+        for ytrack in self.y_vec:
+            
+            button_idx = self.button == 0
+            track_idx = self.y == ytrack
+            trackave = np.mean(self.meas[track_idx*button_idx])
+            self.meas[track_idx] = self.meas[track_idx] / trackave
+            
+            # normalize smooth track if it exists
+            if self.issmoothed:
+                
+                sbutton_idx = self.button_s == 0
+                strack_idx = self.y_s == ytrack
+                strackave = np.mean(self.meas_s[strack_idx*sbutton_idx])
+                self.meas_s[strack_idx] = self.meas_s[strack_idx] / strackave
+
         
         
 #%% Test
@@ -175,5 +195,7 @@ if __name__ == "__main__":
     
     test.smooth(1)
     
-    test.norm_outside()
+    #test.norm_outside()
+    
+    test.norm_all()
     

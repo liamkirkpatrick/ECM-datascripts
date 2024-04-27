@@ -3,7 +3,7 @@
 """
 Created on Wed Mar 27 09:39:20 2024
 
-Plot all data from ALHIC2302 Shallow Cores
+Plot all data from ALHIC2302 Deep Cores
 
 @author: Liam
 """
@@ -32,7 +32,7 @@ window = 10
 # paths
 path_to_data = '../../data/'
 path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
-path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot_2302/'
+path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot_2302deep/'
 metadata_file = 'metadata.csv'
 
 # ONE BIG PLOT
@@ -54,7 +54,7 @@ for index,row in meta.iterrows():
     core = row['core']
     
     # filter for ALHIC2302 shallow ice
-    if core == 'alhic2302' and row['idx_abs'] < 50:
+    if core == 'alhic2302' and row['idx_abs'] > 50:
 
         
         section = row['section']
@@ -124,7 +124,7 @@ my_cmap = matplotlib.colormaps['Spectral']
 if onebigplot:
     AC_all = []
     DC_all = []
-    dmin = 100
+    dmin = 160
     dmax = 0 
     for d in data:
         if d.core=='alhic2302':
@@ -165,7 +165,7 @@ if onebigplot:
     for a in [ax2[1],ax2[4]]:
         a.yaxis.tick_right()
         a.yaxis.set_label_position("right")
-        a.set_xlim([0,120])
+        a.set_xlim([-120,120])
         
     # applies to all
     for a in [ax2[0],ax2[1],ax2[3],ax2[4]]:
@@ -218,10 +218,15 @@ for sec in unique(sections):
             minvec.append(min(data_face.depth))
             maxvec.append(max(data_face.depth))
             
+            idx1 = data_face.button_s == 0
+            idx2 = data_face.y_s > data_face.y_vec[0]
+            idx3 = data_face.y_s < data_face.y_vec[-1]
+            idx = (idx1 * idx2) * idx3
+            
             if data_face.ACorDC == 'AC':
-                AC_all.extend(data_face.meas)
+                AC_all.extend(data_face.meas_s[idx])
             else:
-                DC_all.extend(data_face.meas)
+                DC_all.extend(data_face.meas_s[idx])
     ACpltmin = np.percentile(AC_all,5)
     ACpltmax = np.percentile(AC_all,95)
     DCpltmin = np.percentile(DC_all,5)
@@ -239,7 +244,7 @@ for sec in unique(sections):
         # top-specific
         for a in [ax[0],ax[3]]:
             #a.yaxis.tick_right()
-            a.set_xlim([120, 0])
+            a.set_xlim([-120, 120])
             
         # right specific
         for a in [ax[1],ax[4]]:
@@ -260,9 +265,9 @@ for sec in unique(sections):
                 if data_face.face == 'l':
                     yall = data_face.y_right - data_face.y_s
                     yvec = data_face.y_right -  data_face.y_vec
-                else:
-                    yall = data_face.y_s -  data_face.y_left
-                    yvec =data_face.y_vec -  data_face.y_left
+                elif data_face.face == 't':
+                    yall = data_face.y_s -  (data_face.y_right-data_face.y_left)/2
+                    yvec =data_face.y_vec -  (data_face.y_right-data_face.y_left)/2
                 
                 if data_face.ACorDC =='AC':
                     rescale = ACrescale
@@ -306,18 +311,17 @@ for sec in unique(sections):
         fname = path_to_figures +'alhic2302-'+sec+'.png'
         fig.savefig(fname,bbox_inches='tight')
         plt.close(fig)
-        print("     done with small plot")
     
     if onebigplot:
-        for a,data_face in zip([ax2[1],ax2[0],ax2[4],ax2[3]],[AC_t,AC_l,DC_t,DC_l]):
+        for a,data_face in zip([ax2[0],ax2[1],ax2[3],ax2[4]],[AC_l,AC_t,DC_l,DC_t]):
             
             if data_face != None:
                 if data_face.face == 'l':
                     yall = data_face.y_right - data_face.y_s
                     yvec = data_face.y_right -  data_face.y_vec
-                else:
-                    yall = data_face.y_s -  data_face.y_left
-                    yvec =data_face.y_vec -  data_face.y_left
+                elif data_face.face == 't':
+                    yall = (data_face.y_right-data_face.y_left)/2- data_face.y_s
+                    yvec = (data_face.y_right-data_face.y_left)/2 - data_face.y_vec
                 
                 if data_face.ACorDC =='AC':
                     rescale = ACrescale_all
@@ -333,7 +337,7 @@ for sec in unique(sections):
                             data_face.button_s,
                             a,
                             rescale)
-        print("     done with big plot")
+        print("done with big plot")
 
 #%% save all plot
 

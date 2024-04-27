@@ -23,7 +23,8 @@ path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
 metadata_file = 'metadata.csv'
 
 dates = ['2024-03-19','2024-03-20','2024-03-21','2024-03-22','2024-04-08',
-         '2024-04-09','2024-04-10','2024-04-11','2024-04-12']
+         '2024-04-09','2024-04-10','2024-04-11','2024-04-12','2024-04-15',
+         '2024-04-16','2024-04-17','2024-04-18','2024-04-19']
 
 # set flags in file and corresponding header in master csv
 flag_dict = {'AC Collect Speed: ':'AC_col_sp',
@@ -44,8 +45,7 @@ flag_dict = {'AC Collect Speed: ':'AC_col_sp',
 'Index Mark 3 Relative Depth: ':'idx3_rel',
 '(first) Index Mark Absolute Depth: ' : 'idx_abs',
 'X min Position (raw - not laser corrected): ':'xmin',
-'X max Position (raw - not laser corrected): ': 'xmax'
-    }
+'X max Position (raw - not laser corrected): ': 'xmax'}
 
 #header line
 hline = 'Y_dimension(mm),X_dimension(mm),Button,AC,DC,True_depth(m)'

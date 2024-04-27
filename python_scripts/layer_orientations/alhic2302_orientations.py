@@ -33,12 +33,12 @@ window = 20
 
 # paths
 path_to_data = '../../data/'
-path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot/'
+path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/orientations/'
 metadata_file = 'metadata.csv'
 
 # Correlation
 # distance over which to complete correlation comparison
-comp_range = 0.20
+comp_range = 0.25
 
 # depth interval to complete correlation comparison
 comp_int = 0.001
@@ -78,17 +78,19 @@ for index,row in meta.iterrows():
         face = row['face']
         ACorDC = row['ACorDC']
         
-        print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
-    
         data_item = ECM(core,section,face,ACorDC)
-        data_item.rem_ends(10)
-        data_item.smooth(window)
-        data.append(data_item)
         
-        cores.append(core)
-        sections.append(section)
-        faces.append(face)
-        ACorDCs.append(ACorDC)
+        if max(data_item.depth) < 45:
+            print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
+            
+            data_item.rem_ends(10)
+            data_item.smooth(window)
+            data.append(data_item)
+            
+            cores.append(core)
+            sections.append(section)
+            faces.append(face)
+            ACorDCs.append(ACorDC)
 
 sec = set(sections)
 
@@ -397,8 +399,8 @@ for ax in axs:
     ax.set_ylim([45,15])
     ax.set_xlim([min(test_angle),max(test_angle)])
 
-axs[3].set_xlim([-360,360])
-axs[2].set_xlim(0,90)
+axs[3].set_xlim([0,360])
+axs[2].set_xlim(40,80)
     
 axs[0].set_title('Left Face')
 for i in range(len(right_AC_angle)):
@@ -449,6 +451,7 @@ axs[3].legend()
 
 plt.tight_layout()
 
+fig.savefig(path_to_figures+'2023_firstangleplot.png')
 
 
 

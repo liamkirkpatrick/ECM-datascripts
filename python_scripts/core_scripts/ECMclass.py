@@ -50,6 +50,8 @@ class ECM:
         self.button = raw['Button'].to_numpy()
         self.depth = raw['True_depth(m)'].to_numpy()
         self.y_vec = np.unique(self.y)
+        if 'button_raw' in raw.columns:
+            self.button_raw = raw['button_raw'].to_numpy()
         
         # assign status
         self.issmoothed = False

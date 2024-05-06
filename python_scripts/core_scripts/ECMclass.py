@@ -44,6 +44,8 @@ class ECM:
         fname = self.core+'-'+self.section+'-'+self.face+'-'+self.ACorDC+'.csv'
         raw = pd.read_csv(path_to_data+self.core+'/'+fname)
         
+
+        
         # assign vectors
         self.meas = raw['meas'].to_numpy()
         self.y = raw['Y_dimension(mm)'].to_numpy()
@@ -52,6 +54,22 @@ class ECM:
         self.y_vec = np.unique(self.y)
         if 'button_raw' in raw.columns:
             self.button_raw = raw['button_raw'].to_numpy()
+            
+        # remove tracks that are incomplete
+        lenth = []
+        approx_length = max(self.depth) - min(self.depth)
+        for y in self.y_vec:
+            idx = self.y==y
+            track_length = max(self.depth[idx]) - min(self.depth[idx])
+            # remove tracks not within 1cm of overall length
+            if abs(approx_length - track_length) > 0.01:
+                self.meas = self.meas[np.invert(idx)]
+                self.y = self.y[np.invert(idx)]
+                self.button = self.button[np.invert(idx)]
+                self.depth = self.depth[np.invert(idx)]
+                self.y_vec = self.y_vec[self.y_vec!=y]
+                if 'button_raw' in raw.columns:
+                    self.button_raw = self.button_raw[np.invert(idx)]
         
         # assign status
         self.issmoothed = False

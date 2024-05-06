@@ -224,6 +224,7 @@ def compute_dip_angles(data,sections,core):
     column_names = ['section']
     unique_sec = unique(sections)
     df = pd.DataFrame(unique_sec,columns=column_names)
+    df['depth'] = 0
     
     # loop through all data
     dcnt=0
@@ -287,8 +288,8 @@ def compute_dip_angles(data,sections,core):
                         if scnt==0:
                             track_combos.append('Tracks '+str(i)+' and '+str(j))
             
-                        dmin = max([depth_min[i],depth_min[j]])+0.01001
-                        dmax = min([depth_max[i],depth_max[j]])-0.00999
+                        dmin = max([depth_min[i],depth_min[j]])+0.0010001
+                        dmax = min([depth_max[i],depth_max[j]])-0.0009999
                         
                         k = 1
     
@@ -342,8 +343,9 @@ def compute_dip_angles(data,sections,core):
         # add data to dataframe
         sec_idx = unique_sec.index(d.section)
         df.loc[sec_idx,'section'] = d.section
+        df.loc[sec_idx,'depth'] = np.mean(d.depth)
         angle_rowname = d.ACorDC + '-'+d.face + '-angles'
-        score_rowname = d.ACorDC + '-'+d.face + '-angles'
+        score_rowname = d.ACorDC + '-'+d.face + '-scores'
         if angle_rowname not in df.columns:
             df[angle_rowname] = None
             df[score_rowname] = None
@@ -353,7 +355,7 @@ def compute_dip_angles(data,sections,core):
         # increment counter
         dcnt+=1
     
-    df.to_csv('../../data/angles/'+core+'_angles.csv',index=False)
+    df.to_pickle('../../data/angles/'+core+'_angles.df')
 
 
 #%% Run 2302
@@ -378,7 +380,7 @@ for index,row in meta.iterrows():
     section_num = section.split("_")
     face = row['face']
     
-    if core == 'alhic2201':
+    if core == 'alhic2201' and int(section_num[0])>12:
         
         face = row['face']
         ACorDC = row['ACorDC']

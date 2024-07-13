@@ -210,11 +210,6 @@ def interp_onto_shifted(shifted_depth,depth,slopes,meas,y_vec,y_list,interp_int,
         scnt+=1
             
     return(interp_meas,interp_depth,depth_min,depth_max)
-  
-
-
-
-
 
 #%% Calculate angles
 
@@ -236,7 +231,7 @@ def compute_dip_angles(data,sections,core):
               " - "+d.face+
               " - "+d.ACorDC)
         
-        
+        length = []
         angle_res = 10
         angle_low = -75
         angle_high = 75
@@ -276,6 +271,8 @@ def compute_dip_angles(data,sections,core):
             
             for i in range(len(y_vec)):
                 for j in range(len(y_vec)):
+                    
+                    length.append(depth_max[i]-depth_min[i])
                     
                     # check we're not comparing a track with itself and 
                     # check each track has reasonable length (>15cm) (being over 100m indicates it's a track of all button)
@@ -320,11 +317,7 @@ def compute_dip_angles(data,sections,core):
             maxidx = np.argmax(corr_coef[:,i])
             angle.append(test_angle[maxidx])
             score.append(corr_coef[maxidx,i])
-            
-            #angledf.loc[dcnt,track_combos[icnt]] = test_angle[maxidx]
-            #scoredf.loc[dcnt,track_combos[icnt]] = corr_coef[maxidx,i]
-            
-            
+    
             icnt+=1
             
         
@@ -346,11 +339,14 @@ def compute_dip_angles(data,sections,core):
         df.loc[sec_idx,'depth'] = np.mean(d.depth)
         angle_rowname = d.ACorDC + '-'+d.face + '-angles'
         score_rowname = d.ACorDC + '-'+d.face + '-scores'
+        length_rowname = d.ACorDC + '-'+d.face + '-length'
         if angle_rowname not in df.columns:
             df[angle_rowname] = None
             df[score_rowname] = None
+            df[length_rowname] = None
         df.at[sec_idx, angle_rowname] = angle
         df.at[sec_idx, score_rowname] = score
+        df.at[sec_idx, length_rowname] = length
         
         # increment counter
         dcnt+=1
@@ -380,7 +376,7 @@ for index,row in meta.iterrows():
     section_num = section.split("_")
     face = row['face']
     
-    if core == 'alhic2201' and int(section_num[0])>12:
+    if core == 'alhic2201' and int(section_num[0])>10:
         
         face = row['face']
         ACorDC = row['ACorDC']

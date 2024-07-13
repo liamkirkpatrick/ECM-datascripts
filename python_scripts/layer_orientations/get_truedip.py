@@ -89,7 +89,7 @@ def wiskerplot(d,q,axs,ACorDC):
     
 #%% compute true angles, plot
 
-def truedip(core,side,o_lost):
+def truedip(core,side,o_lost,title):
     # core='alhic2302'
     # side = 'l'
     # o_lost = [19.73,20.39,24.28,30.72,39.53,40.47,41.39,42.7]
@@ -113,6 +113,8 @@ def truedip(core,side,o_lost):
             top_score = row[ACorDC+'-t-scores']
             side_angle = row[ACorDC+'-'+side+'-angles']
             side_score = row[ACorDC+'-'+side+'-scores']
+            top_length = row[ACorDC+'-t-length']
+            side_length = row[ACorDC+'-'+side+'-length']
             
             dip=[]
             orientation=[]
@@ -121,7 +123,7 @@ def truedip(core,side,o_lost):
                 a1 = top_angle[i]
                 for j in range(len(side_angle)):
                     a2=side_angle[j]
-                    score.append((top_score[i]**2)*(side_score[j]**2))
+                    score.append((top_score[i]**2)*(side_score[j]**2)*top_length[i]*side_length[j])
                     eps = np.arctan( 1/np.tan(a1*np.pi/180) * np.tan(a2 * np.pi/180)) * 180/np.pi
                     true = np.arctan(np.tan(a1 * np.pi/180) / np.sin((90-eps)*np.pi/180))* 180/np.pi
                     eps = eps+90
@@ -203,7 +205,7 @@ def truedip(core,side,o_lost):
     axs[0].set_ylabel('Depth (m)')
     axs[1].set_ylabel('Depth (m)')
     axs[0].set_title('Dip Angle (Relative to Horizontal)')
-    axs[1].set_title('Orientation (Relative to Orientation Line)')
+    axs[1].set_title('Dip Direction (Relative to Orientation Line)')
     axs[0].grid()
     axs[1].grid()
     axs[0].set_xlim([0,90])
@@ -224,8 +226,8 @@ def truedip(core,side,o_lost):
                                 facecolor='r',
                                 edgecolor='k',
                                 linewidth=1.5,
-                                label='Interquartile Range'))
-        a.plot([-20,-10],[0,0],'k-',label='10%-90% Percentile Range') 
+                                label='Weighted Interquartile Range'))
+        a.plot([-20,-10],[0,0],'k-',label='Weighted 10%-90% Percentile Range') 
         a.plot([-20],[0],'k.',label='Outlying Estimates') 
     
     # Orientation lost
@@ -237,19 +239,19 @@ def truedip(core,side,o_lost):
     # make the legend 
     handles, labels = axs[0].get_legend_handles_labels()
     handles.insert(0,vertical_line)
-    labels.insert(0,'Median')
+    labels.insert(0,'Weighted Median')
     by_label = dict(zip(labels, handles))
     axs[0].legend(by_label.values(), by_label.keys(),loc='upper right')
     handles, labels = axs[1].get_legend_handles_labels()
     handles.insert(0,vertical_line)
-    labels.insert(0,'Median')
+    labels.insert(0,'Weighted Median')
     by_label = dict(zip(labels, handles))
     axs[1].legend(by_label.values(), by_label.keys(),loc='upper right')
-    
+    fig.suptitle(title)
     plt.tight_layout()
     fig.savefig('../../../figures/orientations/'+core+'_angleplot.png')
     
 #%% Run
 
-truedip('alhic2302','l',[19.73,20.39,24.28,30.72,39.53,40.47,41.39,42.7])
-truedip('alhic2201','r',[17.62,17.65,24.08])
+truedip('alhic2302','l',[19.73,20.39,24.28,30.72,39.53,40.47,41.39,42.7],'ALHIC2302')
+truedip('alhic2201','r',[17.62,17.65,24.08],'ALHIC2201')

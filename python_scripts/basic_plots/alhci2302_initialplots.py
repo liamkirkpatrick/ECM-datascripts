@@ -54,7 +54,7 @@ for index,row in meta.iterrows():
     core = row['core']
     
     # filter for ALHIC2302 shallow ice
-    if core == 'alhic2302' and row['idx_abs'] < 52:
+    if core == 'alhic2302' and row['idx_abs'] < 48 and row['idx_abs']>0:
 
         
         section = row['section']

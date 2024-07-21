@@ -80,7 +80,7 @@ for index,row in meta.iterrows():
         
         data_item = ECM(core,section,face,ACorDC)
         
-        if max(data_item.depth) < 45:
+        if max(data_item.depth) < 46:
             print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
             
             data_item.rem_ends(10)

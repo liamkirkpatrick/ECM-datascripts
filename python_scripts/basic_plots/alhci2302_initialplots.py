@@ -54,7 +54,7 @@ for index,row in meta.iterrows():
     core = row['core']
     
     # filter for ALHIC2302 shallow ice
-    if core == 'alhic2302' and row['idx_abs'] < 50:
+    if core == 'alhic2302' and row['idx_abs'] < 52:
 
         
         section = row['section']
@@ -310,6 +310,7 @@ for sec in unique(sections):
     
     if onebigplot:
         for a,data_face in zip([ax2[1],ax2[0],ax2[4],ax2[3]],[AC_t,AC_l,DC_t,DC_l]):
+            
             
             if data_face != None:
                 if data_face.face == 'l':

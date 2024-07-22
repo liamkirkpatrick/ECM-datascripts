@@ -37,7 +37,7 @@ metadata_file = 'metadata.csv'
 
 # ONE BIG PLOT
 onebigplot = True
-indplots = True
+indplots = False
 
 #%% Read in metadata and import data
 
@@ -309,7 +309,10 @@ for sec in unique(sections):
         print("     done with small plot")
     
     if onebigplot:
-        for a,data_face in zip([ax2[1],ax2[0],ax2[4],ax2[3]],[AC_t,AC_l,DC_t,DC_l]):
+        
+        #[ax[1],ax[0],ax[4],ax[3]],[AC_l,AC_t,DC_l,DC_t]
+        
+        for a,data_face in zip([ax2[1],ax2[0],ax2[4],ax2[3]],[AC_l,AC_t,DC_l,DC_t]):
             
             
             if data_face != None:

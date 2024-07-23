@@ -63,9 +63,9 @@ for index,row in meta.iterrows():
         face = row['face']
         ACorDC = row['ACorDC']
         
-        print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
+        print("Reading "+core+", section "+str(section)+'-'+face+'-'+ACorDC)
     
-        data_item = ECM(core,section,face,ACorDC)
+        data_item = ECM(core,str(section),face,ACorDC)
         data_item.rem_ends(10)
         data_item.smooth(window)
         data.append(data_item)
@@ -158,7 +158,7 @@ for d in data:
 #%% Plot
 
 
-fig,axs = plt.subplots(1,2,figsize=(10,20))
+fig,axs = plt.subplots(1,2,figsize=(10,25))
 
 axs[0].set_xlabel('DC Conductivity')
 axs[1].set_xlabel('AC Conductivity')
@@ -171,8 +171,8 @@ axs[1].plot(AC_meas_1,AC_depth_1,'k-')
 
 
 for ax in axs:
-    ax.set_ylim([20.5,11.5])
-    ax.set_ylim([20.5,11.5])
+    ax.set_ylim([20.8,6.5])
+    ax.set_ylim([20.8,6.5])
     ax.set_ylabel('Depth (m)')
 fig.tight_layout()
 fig.suptitle('PICO2303')

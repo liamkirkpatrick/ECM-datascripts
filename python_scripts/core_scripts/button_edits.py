@@ -228,7 +228,8 @@ for index,row in meta.iterrows():
     face = row['face']
     ACorDC = row['ACorDC']
     
-    if core == 'alhic2302':
+    #if core == 'alhic2302':
+    if core == 'pico2303':
         print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
             
         data_item = ECM(core,section,face,ACorDC)
@@ -247,6 +248,7 @@ qt = True
 for d in data:
     
     print(" Running "+d.core+'-'+d.section+'-'+d.face+'-'+d.ACorDC)
+    
     
     # read dataframe
     df = pd.read_csv(path_to_data+d.core+'/'+d.core+'-'+d.section+'-'+d.face+'-'+d.ACorDC+'.csv')

@@ -23,12 +23,14 @@ path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
 metadata_file = 'metadata.csv'
 
 dates = ['2024-03-19','2024-03-20','2024-03-21','2024-03-22','2024-04-08',
-         '2024-04-09','2024-04-10','2024-04-11','2024-04-12','2024-04-15',
-         '2024-04-16','2024-04-17','2024-04-18','2024-04-19',"2024-07-09",
-         "2024-07-10",
-         "2024-07-11",
-         "2024-07-12",
-         "2024-07-15","2024-07-16","2024-07-17","2024-07-18","2024-07-19"]
+          '2024-04-09','2024-04-10','2024-04-11','2024-04-12','2024-04-15',
+          '2024-04-16','2024-04-17','2024-04-18','2024-04-19',"2024-07-09",
+          "2024-07-10",
+          "2024-07-11",
+          "2024-07-12",
+          "2024-07-15","2024-07-16","2024-07-17","2024-07-18","2024-07-19",'2024-07-22']
+
+#dates = [']
 
 # set flags in file and corresponding header in master csv
 flag_dict = {'AC Collect Speed: ':'AC_col_sp',
@@ -65,17 +67,16 @@ flags = flag_dict.keys()
 for s in extra_headers:
     headers.append(s)
 
-# check if metadata file already exists. If not, create dataframe
-# if os.path.exists(path_to_data+metadata_file):
+#check if metadata file already exists. If not, create dataframe
+if os.path.exists(path_to_data+metadata_file):
     
-#     # Read the CSV file into a pandas dataframe
-#     df = pd.read_csv(path_to_data+metadata_file)
+    # Read the CSV file into a pandas dataframe
+    df = pd.read_csv(path_to_data+metadata_file)
     
-#     # rearange so the columns I want are at the front
-#     df = df[headers]
+    # rearange so the columns I want are at the front
+    df = df[headers]
     
-# else:
-if True:
+else:
     df = pd.DataFrame(columns=headers)
 
 #%% Get list of all file names
@@ -191,7 +192,7 @@ for index,row in df.iterrows():
     # drop X dimension
     raw = raw.drop(['X_dimension(mm)'],axis=1)
     
-    fname = row['core']+'-'+row['section']+'-'+row['face']+'-'+row['ACorDC']+'.csv'
+    fname = row['core']+'-'+str(row['section'])+'-'+row['face']+'-'+row['ACorDC']+'.csv'
     
     raw.to_csv(path_to_data+row['core']+'/'+fname,index=False)
     

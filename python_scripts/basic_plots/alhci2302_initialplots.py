@@ -36,8 +36,8 @@ path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot_
 metadata_file = 'metadata.csv'
 
 # ONE BIG PLOT
-onebigplot = True
-indplots = False
+onebigplot = False
+indplots = True
 
 #%% Read in metadata and import data
 

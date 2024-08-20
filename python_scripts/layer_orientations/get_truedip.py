@@ -105,7 +105,7 @@ def truedip(core,side,o_lost,title):
     # loop through all sections and compute drue dip
     for index, row in df.iterrows():
         
-        print("Running row "+str(row['section']))
+        #print("Running row "+str(row['section']))
         
         for ACorDC in ['AC','DC']:
             
@@ -144,9 +144,12 @@ def truedip(core,side,o_lost,title):
     # make plot
     fig,axs = plt.subplots(1,2,figsize=(9,7),dpi=250)
     
+    # track stats
+    central_estimate = []
+    
     # loop through and calcualte percentiles
     for index,row in df.iterrows():
-        print("Running row "+str(row['section']))
+        #print("Running row "+str(row['section']))
         for ACorDC,c in zip(['AC'],['r.']):
             dip = np.array(row[ACorDC+'-true-angles'])
             orientation = np.array(row[ACorDC+'-true-orientations'])
@@ -158,6 +161,8 @@ def truedip(core,side,o_lost,title):
             # plot dip
             dip_stats = weighted_percentile(dip, percentiles, weights=scores, interpolation='step')
             wiskerplot(depth,dip_stats,axs[0],ACorDC)
+            
+            central_estimate.append(dip_stats[2])
             
             # option to plot 
             for j in range(len(scores)):
@@ -193,8 +198,9 @@ def truedip(core,side,o_lost,title):
                         orientation_stats = (orientation_stats+(bound1+bound2)/2)%360
                     
                     wiskerplot(depth,orientation_stats,axs[1],ACorDC)
-                else:
-                    print("    Too small of a gap!")
+                #else:
+                    
+                #    print("    Too small of a gap!")
             
             
 
@@ -221,7 +227,7 @@ def truedip(core,side,o_lost,title):
                                  markeredgewidth=1.5, label='Median')
     # make plot for axis labels
     for a in axs:
-        #a.plot([-10,-10],[0,1],'k-',label='Median') 
+        a.plot([-10,-10],[0,1],'k-',label='Median') 
         a.add_patch(Rectangle((-20,0),10,10,
                                 facecolor='r',
                                 edgecolor='k',
@@ -251,7 +257,16 @@ def truedip(core,side,o_lost,title):
     plt.tight_layout()
     fig.savefig('../../../figures/orientations/'+core+'_angleplot.png')
     
+    # print stats:
+    print(central_estimate)
+    est = np.array(central_estimate)
+    print("Core: "+core)
+    print("    min = "+str(np.min(est)))
+    print("    max = "+str(np.max(est)))
+    print("    mean = "+str(np.mean(est)))
+    print("    std = "+str(np.std(est)))
+    
 #%% Run
 
-truedip('alhic2302','l',[19.73,20.39,24.28,30.72,39.53,40.47,41.39,42.7],'ALHIC2302')
+truedip('alhic2302','l',[10.37,19.73,20.39,24.28,30.72,39.53,40.47,41.39,42.7],'ALHIC2302')
 truedip('alhic2201','r',[17.62,17.65,24.08],'ALHIC2201')

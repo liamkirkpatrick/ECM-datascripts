@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 import math
 from scipy import stats
+import string
 
 # progress bar
 from tqdm import tqdm
@@ -35,6 +36,11 @@ import sys
 sys.path.append("../core_scripts/")
 from ECMclass import ECM
 
+#%% Make colormap
+
+# make colormap
+my_cmap = matplotlib.colormaps['Spectral']
+
 #%% user Inputs
 
 # paths
@@ -42,7 +48,7 @@ path_to_data = '../../data/'
 path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/methods_paper/'
 metadata_file = 'metadata.csv'
 
-# smoothing window
+# smoothing window (mm)
 window = 10
 
 #%% set up colormap
@@ -342,14 +348,15 @@ pair_angle_idx = np.argmax(corr_coef[:,5])
 pair_angle = test_angle[pair_angle_idx]
         
 
-#%% Make Plot
+#%% Make Plot - version 2
 
-fig,axs = plt.subplots(2,2,figsize=(10,10),dpi=200)
+fig,axs = plt.subplots(2,2,figsize=(8,8),dpi=300)
 #fig,axs = plt.subplots(1,2,figsize=(10,25))
-fig.suptitle('Demo Plot')
+#fig.suptitle('Demo Plot')
 
 
-# suplot 1 - make plot
+
+# suplot 0 - make plot
 ycnt = 0
 for y in d.y_vec:
     idx = d.y_s == y
@@ -362,49 +369,99 @@ b_r = 2.8e-8
 axs[0,0].plot([b_l,b_l,b_r,b_r,b_l],[b_b,b_t,b_t,b_b,b_b],'k')
 axs[0,0].set_ylim([np.max(d.depth),np.min(d.depth)])
 
+# subplot 1 - make plot
+meas = d.meas_s
+button = d.button_s
+ycor = d.y_s
+depth = d.depth_s
+pltmin = np.percentile(meas,5)
+pltmax = np.percentile(meas,95)
+rescale = lambda k: (k-pltmin) /  (pltmax-pltmin)
+axs[0,1].set_ylim([np.max(d.depth),np.min(d.depth)])
+axs[0,1].set_xlim([min(d.y_vec)-15-d.y_left,max(d.y_vec)+15-d.y_left])
+for y in d.y_vec:
+    width = y_vec[1] - y_vec[0]
+    idx = ycor==y
+    tmeas = meas[idx]
+    tbut = button[idx]
+    tycor = ycor[idx]
+    td = depth[idx]
+    for i in range(len(tmeas)-1):
+        axs[0,1].add_patch(Rectangle((y-(width-0.2)/2-d.y_left,td[i]),(width-0.2),td[i+1]-td[i],facecolor=my_cmap(rescale(tmeas[i]))))
+#ACcbar_ax = fig.add_axes([0.07,-0.05,0.35,0.05])
+#ACnorm = matplotlib.colors.Normalize(vmin=pltmin,vmax=pltmax)
+#ACcbar = axs[1,0].colorbar(matplotlib.cm.ScalarMappable(norm=ACnorm, cmap=my_cmap),orientation='horizontal',label='Current (amps)')
+
+
+
 # subplot 2 - make plot
-axs[0,1].set_xlim([b_l,b_r])
-axs[0,1].set_ylim([b_b,b_t])
+axs[1,0].set_xlim([b_l,b_r])
+axs[1,0].set_ylim([b_b,b_t])
 idx = d.y_s == d.y_vec[0]
-axs[0,1].plot(d.meas_s[idx],d.depth_s[idx],label="Track 1 ",color=cmap(0.0))
+axs[1,0].plot(d.meas_s[idx],d.depth_s[idx],label="Track 1",color=cmap(0.0))
 idx = d.y_s == d.y_vec[-1]
-axs[0,1].plot(d.meas_s[idx],d.depth_s[idx],label="Track "+str(len(d.y_vec)),color=cmap(1.0))
+axs[1,0].plot(d.meas_s[idx],d.depth_s[idx],label="Track "+str(len(d.y_vec)),color=cmap(1.0))
 shift_1 = np.tan(pair_angle*np.pi/180) * (d.y_left-d.y_vec[0])/1000
 idx = d.y_s == d.y_vec[0]
-axs[0,1].plot(d.meas_s[idx],d.depth_s[idx]+shift_1,label="Track 1 ",color=cmap(0.0),linestyle='dashed')
+axs[1,0].plot(d.meas_s[idx],d.depth_s[idx]+shift_1,label="Track 1 shifted",color=cmap(0.0),linestyle='dashed')
 shift_6 = np.tan(pair_angle*np.pi/180) * (d.y_left-d.y_vec[-1])/1000
 idx = d.y_s == d.y_vec[-1]
-axs[0,1].plot(d.meas_s[idx],d.depth_s[idx]+shift_6,label="Track "+str(len(d.y_vec))+" shifted",color=cmap(1.0),linestyle='dashed')
+axs[1,0].plot(d.meas_s[idx],d.depth_s[idx]+shift_6,label="Track "+str(len(d.y_vec))+" shifted",color=cmap(1.0),linestyle='dashed')
     
 # subplot 3 - make plot
+axs[1,1].plot(test_angle,corr_coef[:,5],'r-',label = 'Tracks 1 and 6 - as in c)')
+max_angle = test_angle[corr_coef[:,5]==max(corr_coef[:,5])]
+axs[1,1].plot([max_angle,max_angle],[0,1],'r:',label='Angle Pick for Tracks 1 and 6')
 for i in idx_corr:
-    axs[1,0].plot(test_angle,corr_coef[:,i],'k-')
-    axs[1,0].fill_between(test_angle,corr_coef[:,i],corr_coef[:,i]-2,color='0.1',alpha=0.03)
-axs[1,0].plot(test_angle,corr_coef[:,5],'r-')
+    if i == idx_corr[0]:
+        axs[1,1].plot(test_angle,corr_coef[:,i],'k-',label='All Other Track Pairs')
+        max_angle = test_angle[corr_coef[:,i]==max(corr_coef[:,i])]
+        axs[1,1].plot([max_angle,max_angle],[0,1],'k:',label='Angle Pick for Other Pairs')
+    else:
+        axs[1,1].plot(test_angle,corr_coef[:,i],'k-',label='_nolegend_')
+        max_angle = test_angle[corr_coef[:,i]==max(corr_coef[:,i])]
+        axs[1,1].plot([max_angle,max_angle],[0,1],'k:',label='_nolegend_')
+    axs[1,1].fill_between(test_angle,corr_coef[:,i],corr_coef[:,i]-2,color='0.1',alpha=0.03)
+axs[1,1].plot(test_angle,corr_coef[:,5],'r-',label = '_nolegend_')
+# vertical dotted line
+max_angle = test_angle[corr_coef[:,5]==max(corr_coef[:,5])]
+axs[1,1].plot([max_angle,max_angle],[0,1],'r:',label='_nolegend_')
 
 # figure settup
-#       subplot 1
+
+#       subplot 0
 axs[0,0].set_xlabel('Conductivity (amps)')
-axs[0,0].set_ylabel('depth')
-axs[0,0].legend()
+axs[0,0].set_ylabel('Depth (m)')
+axs[0,0].legend(loc='upper right')
+
+#       subplot 1
+#axs[0,1].yaxis.tick_right()
+#axs[0,1].yaxis.set_label_position("right")
+axs[0,1].set_yticks([])
+#axs[0,1].set_ylabel('depth')
+axs[0,1].set_xlabel('distance from center of core (mm)')
+
 #       subplot 2
-axs[0,1].set_xlabel('Conductivity')
-axs[0,1].set_ylabel('depth')
-axs[0,1].legend()
+axs[1,0].set_xlabel('Conductivity')
+axs[1,0].set_ylabel('Depth (m)')
+axs[1,0].legend()
+
 #       subplot 3
-axs[1,0].set_xlabel('Test Angle (degrees)')
-axs[1,0].set_ylabel('Correlation Coefficent')
-axs[1,0].set_ylim([0,1.1])
+axs[1,1].set_xlabel('Test Angle (degrees)')
+axs[1,1].set_ylabel('Correlation Coefficent')
+axs[1,1].set_ylim([0.2,1.35])
+axs[1,1].legend(loc='upper right')
+axs[1,1].set_yticks([0.2,0.4,0.6,0.8,1])
 
 plt.tight_layout()
 
 
 # line between subplots
 transFigure = fig.transFigure.inverted()
-coord1 = transFigure.transform(axs[0,0].transData.transform([b_r,b_t]))
-coord2 = transFigure.transform(axs[0,1].transData.transform([b_l,b_t,]))
+coord1 = transFigure.transform(axs[0,0].transData.transform([b_l,b_b]))
+coord2 = transFigure.transform(axs[1,0].transData.transform([b_l,b_t,]))
 coord3 = transFigure.transform(axs[0,0].transData.transform([b_r,b_b]))
-coord4 = transFigure.transform(axs[0,1].transData.transform([b_l,b_b,]))
+coord4 = transFigure.transform(axs[1,0].transData.transform([b_r,b_t,]))
 line1 = matplotlib.lines.Line2D((coord1[0],coord2[0]),(coord1[1],coord2[1]),
                                 transform=fig.transFigure,color='k')
 line2 = matplotlib.lines.Line2D((coord3[0],coord4[0]),(coord3[1],coord4[1]),
@@ -412,6 +469,99 @@ line2 = matplotlib.lines.Line2D((coord3[0],coord4[0]),(coord3[1],coord4[1]),
 
 fig.lines.append(line1)
 fig.lines.append(line2)
+
+
+#%% adjust axis
+
+
+n=0
+for ax in [axs[0,0],axs[0,1],axs[1,0],axs[1,1]]:
+    
+    ax.text(0.05, 0.91, string.ascii_lowercase[n]+')', transform=ax.transAxes, 
+            size=20, weight='bold')
+    n+=1
+    
+pos1 = axs[0,0].get_position()  # Get the original position
+pos2 = axs[0,1].get_position()
+gap = pos2.x0 - pos1.x1     # Calculate the gap between the subplots
+axs[0,1].set_position([pos2.x0 - gap, pos2.y0, pos2.width*0.91, pos2.height])
+
+ACcbar_ax = fig.add_axes([0.87,0.565,0.03,0.4])
+ACnorm = matplotlib.colors.Normalize(vmin=pltmin,vmax=pltmax)
+ACcbar = fig.colorbar(matplotlib.cm.ScalarMappable(norm=ACnorm, cmap=my_cmap),cax=ACcbar_ax,
+              orientation='vertical',label='Current (amps )')
+
+        
+#%% Make Plot - Version 1
+
+# fig,axs = plt.subplots(2,2,figsize=(10,10),dpi=200)
+# #fig,axs = plt.subplots(1,2,figsize=(10,25))
+# fig.suptitle('Demo Plot')
+
+
+# # suplot 1 - make plot
+# ycnt = 0
+# for y in d.y_vec:
+#     idx = d.y_s == y
+#     axs[0,0].plot(d.meas_s[idx],d.depth_s[idx],label="track "+str(ycnt+1),color=cmap(ycnt/len(y_vec)))
+#     ycnt+=1
+# b_t = 16.4
+# b_b = 16.65
+# b_l = 1.9e-8
+# b_r = 2.8e-8
+# axs[0,0].plot([b_l,b_l,b_r,b_r,b_l],[b_b,b_t,b_t,b_b,b_b],'k')
+# axs[0,0].set_ylim([np.max(d.depth),np.min(d.depth)])
+
+# # subplot 2 - make plot
+# axs[0,1].set_xlim([b_l,b_r])
+# axs[0,1].set_ylim([b_b,b_t])
+# idx = d.y_s == d.y_vec[0]
+# axs[0,1].plot(d.meas_s[idx],d.depth_s[idx],label="Track 1 ",color=cmap(0.0))
+# idx = d.y_s == d.y_vec[-1]
+# axs[0,1].plot(d.meas_s[idx],d.depth_s[idx],label="Track "+str(len(d.y_vec)),color=cmap(1.0))
+# shift_1 = np.tan(pair_angle*np.pi/180) * (d.y_left-d.y_vec[0])/1000
+# idx = d.y_s == d.y_vec[0]
+# axs[0,1].plot(d.meas_s[idx],d.depth_s[idx]+shift_1,label="Track 1 ",color=cmap(0.0),linestyle='dashed')
+# shift_6 = np.tan(pair_angle*np.pi/180) * (d.y_left-d.y_vec[-1])/1000
+# idx = d.y_s == d.y_vec[-1]
+# axs[0,1].plot(d.meas_s[idx],d.depth_s[idx]+shift_6,label="Track "+str(len(d.y_vec))+" shifted",color=cmap(1.0),linestyle='dashed')
+    
+# # subplot 3 - make plot
+# for i in idx_corr:
+#     axs[1,0].plot(test_angle,corr_coef[:,i],'k-')
+#     axs[1,0].fill_between(test_angle,corr_coef[:,i],corr_coef[:,i]-2,color='0.1',alpha=0.03)
+# axs[1,0].plot(test_angle,corr_coef[:,5],'r-')
+
+# # figure settup
+# #       subplot 1
+# axs[0,0].set_xlabel('Conductivity (amps)')
+# axs[0,0].set_ylabel('depth')
+# axs[0,0].legend()
+# #       subplot 2
+# axs[0,1].set_xlabel('Conductivity')
+# axs[0,1].set_ylabel('depth')
+# axs[0,1].legend()
+# #       subplot 3
+# axs[1,0].set_xlabel('Test Angle (degrees)')
+# axs[1,0].set_ylabel('Correlation Coefficent')
+# axs[1,0].set_ylim([0,1.1])
+
+# plt.tight_layout()
+
+
+# # line between subplots
+# transFigure = fig.transFigure.inverted()
+# coord1 = transFigure.transform(axs[0,0].transData.transform([b_r,b_t]))
+# coord2 = transFigure.transform(axs[0,1].transData.transform([b_l,b_t,]))
+# coord3 = transFigure.transform(axs[0,0].transData.transform([b_r,b_b]))
+# coord4 = transFigure.transform(axs[0,1].transData.transform([b_l,b_b,]))
+# line1 = matplotlib.lines.Line2D((coord1[0],coord2[0]),(coord1[1],coord2[1]),
+#                                 transform=fig.transFigure,color='k')
+# line2 = matplotlib.lines.Line2D((coord3[0],coord4[0]),(coord3[1],coord4[1]),
+#                                 transform=fig.transFigure,color='k')
+
+# fig.lines.append(line1)
+# fig.lines.append(line2)
 
 
 

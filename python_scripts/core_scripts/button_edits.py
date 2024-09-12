@@ -231,12 +231,14 @@ for index,row in meta.iterrows():
     if core == 'alhic2302':
     #if core == 'pico2303':
         print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
-            
-        data_item = ECM(core,section,face,ACorDC)
         
-        if max(data_item.depth) < 47 and min(data_item.depth)>3:
-            data_item.smooth(window)
-            data.append(data_item)
+        if section == '51_2':
+            
+            data_item = ECM(core,section,face,ACorDC)
+            
+            if max(data_item.depth) < 47 and min(data_item.depth)>3:
+                data_item.smooth(window)
+                data.append(data_item)
 
 #launch gui
 layout = make_gui()

@@ -10,6 +10,10 @@ Plot all data from ALHIC2302 Shallow Cores in an annimation for use in presentat
 
 #%% Import packages 
 
+import warnings
+warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+
 # general
 import numpy as np
 import pandas as pd
@@ -58,7 +62,7 @@ for index,row in meta.iterrows():
     core = row['core']
     
     # filter for ALHIC2302 shallow ice
-    if core == 'alhic2302' and row['idx_abs'] < 45 and row['ACorDC']=='AC':
+    if core == 'alhic2302' and row['idx_abs'] < 48 and row['idx_abs']>0 and row['ACorDC']=='AC':
 
         
         section = row['section']
@@ -260,7 +264,7 @@ ACcbar = fig2.colorbar(matplotlib.cm.ScalarMappable(norm=ACnorm, cmap=my_cmap),c
 
 #%% Loop through
 
-plt_depths = np.linspace(20,44,1400)
+plt_depths = np.linspace(11.4,44,1600)
 width = 2
 dcnt=0
 image_names=[]
@@ -291,7 +295,7 @@ pbar.close()
 
 image_files = [os.path.join(path_to_figures,img)
                for img in image_names]
-clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(image_files, fps=30)
+clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(image_files)
 clip.write_videofile(path_to_figures+'/alhic2302_movie.mp4')
 
     

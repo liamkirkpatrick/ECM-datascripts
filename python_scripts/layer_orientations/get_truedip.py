@@ -35,6 +35,9 @@ import sys
 sys.path.append("../core_scripts/")
 from ECMclass import ECM
 
+# math
+from statsmodels.stats.weightstats import DescrStatsW
+
 #%% Box and Wisker Plot
 
 def wiskerplot(d,q,axs,ACorDC):
@@ -202,7 +205,6 @@ def truedip(core,side,o_lost,title):
                     
                 #    print("    Too small of a gap!")
             
-            
 
             
     # housekeeping
@@ -265,6 +267,69 @@ def truedip(core,side,o_lost,title):
     print("    max = "+str(np.max(est)))
     print("    mean = "+str(np.mean(est)))
     print("    std = "+str(np.std(est)))
+    
+    #%% Make another plot
+    
+    fig2,axs2 = plt.subplots(1,1,dpi=200)
+
+    weighted_mean=[]
+    weighted_std = []
+    
+    # loop through and calcualte percentiles
+    for index,row in df.iterrows():
+        #print("Running row "+str(row['section']))
+        for ACorDC,c in zip(['AC'],['r.']):
+            dip = np.array(row[ACorDC+'-true-angles'])
+            orientation = np.array(row[ACorDC+'-true-orientations'])
+            scores = np.array(row[ACorDC+'-true-scores'])
+            depth = row['depth']
+    
+                
+            weighted_stats = DescrStatsW(dip, weights=scores, ddof=0)
+            weighted_mean.append(weighted_stats.mean)
+            weighted_std.append(weighted_stats.std)
+            
+    axs2.plot(abs(weighted_mean-np.mean(weighted_mean)),weighted_std,'k.')
+            
+    axs2.set_xlabel('Difference from Average Weighted Mean')
+    axs2.set_ylabel('Weigthed Standard Deviation')
+    axs2.set_title(core)
+            
+    fig2.savefig('../../../figures/orientations/'+core+'_dipspread.png')
+    
+    #%% Make another plot
+    
+    fig3,axs3 = plt.subplots(1,1,dpi=200)
+
+    weighted_mean=[]
+    weighted_std = []
+    spread = []
+    
+    # loop through and calcualte percentiles
+    for index,row in df.iterrows():
+        #print("Running row "+str(row['section']))
+        for ACorDC,c in zip(['AC'],['r.']):
+            dip = np.array(row[ACorDC+'-true-angles'])
+            orientation = np.array(row[ACorDC+'-true-orientations'])
+            scores = np.array(row[ACorDC+'-true-scores'])
+            depth = row['depth']
+    
+                
+            weighted_stats = DescrStatsW(dip, weights=scores, ddof=0)
+            weighted_mean.append(weighted_stats.mean)
+            weighted_std.append(weighted_stats.std)
+            spread.append(row['10-90 percentile spread'])
+            
+            
+    axs3.plot(spread,weighted_std,'k.')
+            
+    axs3.set_xlabel('10-90 Percentile Ratio')
+    axs3.set_ylabel('Weighted Standard Deviation')
+    axs3.set_title(core)
+    
+            
+    fig3.savefig('../../../figures/orientations/'+core+'_dip_percentile.png')
+    
     
 #%% Run
 

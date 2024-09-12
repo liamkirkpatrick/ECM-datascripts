@@ -232,10 +232,10 @@ def compute_dip_angles(data,sections,core):
               " - "+d.ACorDC)
         
         length = []
-        angle_res = 10
+        angle_res = 1
         angle_low = -75
         angle_high = 75
-        test_angle = np.linspace(angle_low,angle_high,int(angle_high-angle_low*angle_res+1))
+        test_angle = np.linspace(angle_low,angle_high,int((angle_high-angle_low)*angle_res+1))
         
         # assign angles to test
         slopes = np.tan(test_angle * np.pi/180)
@@ -325,16 +325,16 @@ def compute_dip_angles(data,sections,core):
             icnt+=1
             
         
-        # make a plot
-        fig,axs = plt.subplots()
-        axs.set_title(d.core+" - "+d.section+" - "+d.face+" - "+d.ACorDC)
-        axs.plot(angle,score,'k*')
-        axs.set_xlabel('Angle')
-        axs.set_ylabel('Score')
-        axs.set_xlim([-90,90])
-        axs.set_ylim([0,1])
-        fig.savefig('../../../figures/single_orientations/'
-                    +d.core+"-"+d.section+"-"+d.face+"-"+d.ACorDC+'.png')
+        # # make a plot
+        # fig,axs = plt.subplots()
+        # axs.set_title(d.core+" - "+d.section+" - "+d.face+" - "+d.ACorDC)
+        # axs.plot(angle,score,'k*')
+        # axs.set_xlabel('Angle')
+        # axs.set_ylabel('Score')
+        # axs.set_xlim([-90,90])
+        # axs.set_ylim([0,1])
+        # fig.savefig('../../../figures/single_orientations/'
+        #             +d.core+"-"+d.section+"-"+d.face+"-"+d.ACorDC+'.png')
     
         
         # add data to dataframe
@@ -352,6 +352,13 @@ def compute_dip_angles(data,sections,core):
         df.at[sec_idx, score_rowname] = score
         df.at[sec_idx, length_rowname] = length
         
+        
+        # calculate percentage spread between 10 and 90th percentile
+        meas10 = np.percentile(d.meas[d.button==0],10)
+        meas90 = np.percentile(d.meas[d.button==0],90)
+        spread = meas90/meas10
+        df.at[sec_idx,'10-90 percentile spread'] = spread
+        
         # increment counter
         dcnt+=1
     
@@ -364,40 +371,40 @@ compute_dip_angles(data,sections,'alhic2302')
 
 #%% Read in metadata and import data - ALHIC2201
 
-# meta = pd.read_csv(path_to_data+metadata_file)
+meta = pd.read_csv(path_to_data+metadata_file)
 
-# # import each script as an ECM class item
-# data = []
-# cores = []
-# sections = []
-# faces = []
-# ACorDCs = []
-# max_tracks = 0
-# for index,row in meta.iterrows():
+# import each script as an ECM class item
+data = []
+cores = []
+sections = []
+faces = []
+ACorDCs = []
+max_tracks = 0
+for index,row in meta.iterrows():
     
-#     core = row['core']
-#     section = row['section']
-#     section_num = section.split("_")
-#     face = row['face']
+    core = row['core']
+    section = row['section']
+    section_num = section.split("_")
+    face = row['face']
     
-#     if core == 'alhic2201' and int(section_num[0])>10:
+    if core == 'alhic2201' and int(section_num[0])>10:
         
-#         face = row['face']
-#         ACorDC = row['ACorDC']
+        face = row['face']
+        ACorDC = row['ACorDC']
         
-#         print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
+        print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
     
-#         data_item = ECM(core,section,face,ACorDC)
-#         data_item.rem_ends(10)
-#         data_item.smooth(window)
-#         data.append(data_item)
+        data_item = ECM(core,section,face,ACorDC)
+        data_item.rem_ends(10)
+        data_item.smooth(window)
+        data.append(data_item)
         
-#         cores.append(core)
-#         sections.append(section)
-#         faces.append(face)
-#         ACorDCs.append(ACorDC)
+        cores.append(core)
+        sections.append(section)
+        faces.append(face)
+        ACorDCs.append(ACorDC)
         
-#         if len(data_item.y_vec)>max_tracks:
-#             max_tracks = len(data_item.y_vec)
+        if len(data_item.y_vec)>max_tracks:
+            max_tracks = len(data_item.y_vec)
 
-# compute_dip_angles(data,sections,'alhic2201')
+compute_dip_angles(data,sections,'alhic2201')

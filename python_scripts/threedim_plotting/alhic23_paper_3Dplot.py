@@ -41,7 +41,7 @@ window = 10
 # paths
 path_to_data = '../../data/'
 path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
-path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot_2302/'
+path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/three_dim/'
 metadata_file = 'metadata.csv'
 
 # ONE BIG PLOT
@@ -179,6 +179,7 @@ if True:
             int_hi = round(max(td),2)
             depth_interp = np.linspace(int_lo,int_hi,int((int_hi-int_lo)/0.002)+1)
             meas_interp = np.interp(depth_interp,np.flip(td),np.flip(tmeas))
+        
             
             # loop through all datapoints
             for i in range(len(meas_interp)-1):

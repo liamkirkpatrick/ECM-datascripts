@@ -31,7 +31,7 @@ window = 10
 # paths
 path_to_data = '../../data/'
 path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
-path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/first_plot_2302/'
+path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/three_dim/'
 metadata_file = 'metadata.csv'
 
 # ONE BIG PLOT
@@ -149,7 +149,7 @@ if onebigplot:
     fig2,ax2 = plt.subplots(1, 5, 
                             gridspec_kw={'width_ratios': [3, 3,2, 3, 3]},
                             figsize=(8,15),
-                            dpi=60)
+                            dpi=240)
     
     #fig2.suptitle('ALHIC2302 - All Data - '+str(window)+' mm smooth')
     ax2[2].axis('off')

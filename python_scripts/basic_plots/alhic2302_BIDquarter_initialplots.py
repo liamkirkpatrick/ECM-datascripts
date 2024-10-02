@@ -55,7 +55,7 @@ for index,row in meta.iterrows():
     face = row['face']
     ACorDC = row['ACorDC']
     
-    if core == 'alhic2302' and (face == 'r' or face == 'tr'):
+    if core == 'alhic2302' and (face == 'r' or face == 'tr') and 'repeat' not in section:
         
         print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
     
@@ -243,8 +243,10 @@ for sec in unique(sections):
         
         # save figure
         fname = path_to_figures +'alhic2302-'+sec+'.png'
-        fig.savefig(fname,bbox_inches='tight')
-        plt.close(fig)
+        #fig.savefig(fname,bbox_inches='tight')
+        # plt.close(fig)
+        
+        plt.show()
     
 
     

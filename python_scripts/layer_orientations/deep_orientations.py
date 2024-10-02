@@ -1,10 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Sat May  4 11:23:00 2024
 
-Orientation Script - try many
-Doing things without functions - that seemed to be slowing things down
+
+Angle Calculations on ALHIC2302
 
 @author: Liam
 """
@@ -30,21 +27,45 @@ import sys
 sys.path.append("../core_scripts/")
 from ECMclass import ECM
 
-#%% user Inputs
+# weighted percentile statistics
+from weighted_percentile import weighted_percentile
+
+# math
+from statsmodels.stats.weightstats import DescrStatsW
+
+#%% User Inputs
+
+# smoothing window, mm
+window = 20
 
 # paths
 path_to_data = '../../data/'
-path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/orientations/'
+path_to_figures = '/Users/Liam/Desktop/UW/ECM/2024_structure/figures/deep_orientations/'
 metadata_file = 'metadata.csv'
-path_to_angles = '../../data/angles'
 
-# smoothing window
-window = 10
+# Correlation
+# distance over which to complete correlation comparison
+comp_range = 0.25
+
+# depth interval to complete correlation comparison
+comp_int = 0.001
+
+score_floor = 0.65
+
+# spacing of line that we interpolate onto
+interp_int = 0.00025
+
+# do I want plots
+plot = True
+
+# set sections to run
+to_run = ['155_2','156_2','158','159_3']
 
 
-#%% Read in metadata and import data - ALHIC2302
+#%% Read in metadata and import data
 
 meta = pd.read_csv(path_to_data+metadata_file)
+
 
 # import each script as an ECM class item
 data = []
@@ -52,34 +73,32 @@ cores = []
 sections = []
 faces = []
 ACorDCs = []
-max_tracks = 0
 for index,row in meta.iterrows():
     
     core = row['core']
-    section = row['section']
-    section_num = section.split("_")
-    face = row['face']
     
-    #if core == 'alhic2302' and section=='51_2' and row['ACorDC']=='AC' and face=='l':
-    if core == 'alhic2302' and int(section_num[0])<54 and int(section_num[0])>0:
+    if core == 'alhic2302':
+
         
+        section = row['section']
         face = row['face']
         ACorDC = row['ACorDC']
         
-        print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
-    
         data_item = ECM(core,section,face,ACorDC)
-        data_item.rem_ends(10)
-        data_item.smooth(window)
-        data.append(data_item)
         
-        cores.append(core)
-        sections.append(section)
-        faces.append(face)
-        ACorDCs.append(ACorDC)
-        
-        if len(data_item.y_vec)>max_tracks:
-            max_tracks = len(data_item.y_vec)
+        if section in to_run and ACorDC == 'AC' and (face == 'r' or face == 'tr'):
+            print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
+            
+            data_item.rem_ends(10)
+            data_item.smooth(window)
+            data.append(data_item)
+            
+            cores.append(core)
+            sections.append(section)
+            faces.append(face)
+            ACorDCs.append(ACorDC)
+
+sec = set(sections)
 
 #%% define function to find unique elements in list
 def unique(list1):
@@ -233,9 +252,9 @@ def compute_dip_angles(data,sections,core):
               " - "+d.ACorDC)
         
         length = []
-        angle_res = 1
-        angle_low = -75
-        angle_high = 75
+        angle_res = 0.5
+        angle_low = -55
+        angle_high = 55
         test_angle = np.linspace(angle_low,angle_high,int((angle_high-angle_low)*angle_res+1))
         
         # assign angles to test
@@ -324,19 +343,6 @@ def compute_dip_angles(data,sections,core):
             score.append(corr_coef[maxidx,i])
     
             icnt+=1
-            
-        
-        # # make a plot
-        # fig,axs = plt.subplots()
-        # axs.set_title(d.core+" - "+d.section+" - "+d.face+" - "+d.ACorDC)
-        # axs.plot(angle,score,'k*')
-        # axs.set_xlabel('Angle')
-        # axs.set_ylabel('Score')
-        # axs.set_xlim([-90,90])
-        # axs.set_ylim([0,1])
-        # fig.savefig('../../../figures/single_orientations/'
-        #             +d.core+"-"+d.section+"-"+d.face+"-"+d.ACorDC+'.png')
-    
         
         # add data to dataframe
         sec_idx = unique_sec.index(d.section)
@@ -363,50 +369,77 @@ def compute_dip_angles(data,sections,core):
         # increment counter
         dcnt+=1
     
-    df.to_pickle('../../data/angles/'+core+'_angles.df')
-    
+
+    return(df)
 
 #%% Run 2302
+core = 'alhic2302'
+df = compute_dip_angles(data,sections,'alhic2302')
 
-compute_dip_angles(data,sections,'alhic2302')
+#%% Calculate True Angles
 
-#%% Read in metadata and import data - ALHIC2201
-
-meta = pd.read_csv(path_to_data+metadata_file)
-
-
-# import each script as an ECM class item
-data = []
-cores = []
-sections = []
-faces = []
-ACorDCs = []
-max_tracks = 0
-for index,row in meta.iterrows():
+# make empty columns for true angles
+for n in ['AC-true-angles','AC-true-scores',
+   'AC-true-orientations','AC-mean-angle',
+   'AC-tr-mean-angle','AC-r-mean-angle']:
+    df[n]=None
     
-    core = row['core']
-    section = row['section']
-    section_num = section.split("_")
-    face = row['face']
-    
-    if core == 'alhic2201' and int(section_num[0])>10:
-        
-        face = row['face']
-        ACorDC = row['ACorDC']
-        
-        print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
-    
-        data_item = ECM(core,section,face,ACorDC)
-        data_item.rem_ends(10)
-        data_item.smooth(window)
-        data.append(data_item)
-        
-        cores.append(core)
-        sections.append(section)
-        faces.append(face)
-        ACorDCs.append(ACorDC)
-        
-        if len(data_item.y_vec)>max_tracks:
-            max_tracks = len(data_item.y_vec)
+side = 'r'
 
-compute_dip_angles(data,sections,'alhic2201')
+# loop through all sections and compute drue dip
+for index, row in df.iterrows():
+    
+    #print("Running row "+str(row['section']))
+    
+    # only do AC (copied code so also built for DC - whoops!)
+    for ACorDC in ['AC']:
+        
+        top_angle = row[ACorDC+'-tr-angles']
+        top_score = row[ACorDC+'-tr-scores']
+        side_angle = row[ACorDC+'-'+side+'-angles']
+        side_score = row[ACorDC+'-'+side+'-scores']
+        top_length = row[ACorDC+'-tr-length']
+        side_length = row[ACorDC+'-'+side+'-length']
+        
+        #%% save mean angle from each face
+        for angle,score,col in zip([top_angle,side_angle],[top_score,side_score],['AC-tr-mean-angle','AC-r-mean-angle']):
+            weighted_stats = DescrStatsW(angle, weights=score, ddof=0)
+            df.at[index,col] = weighted_stats.mean
+        
+        dip=[]
+        orientation=[]
+        score=[]
+        for i in range(len(top_angle)):
+            a1 = top_angle[i]
+            for j in range(len(side_angle)):
+                a2=side_angle[j]
+                score.append((top_score[i]**2)*(side_score[j]**2)*top_length[i]*side_length[j])
+                eps = np.arctan( 1/np.tan(a1*np.pi/180) * np.tan(a2 * np.pi/180)) * 180/np.pi
+                true = np.arctan(np.tan(a1 * np.pi/180) / np.sin((90-eps)*np.pi/180))* 180/np.pi
+                eps = eps+90
+                if true<0:
+                    eps = eps+180
+                    true = true * -1
+                orientation.append(eps)
+                dip.append(true)
+                
+        # compute central estimate
+        weighted_stats = DescrStatsW(dip, weights=score, ddof=0)
+        df.at[index,ACorDC+'-mean-angle'] = weighted_stats.mean
+
+        # save to dataframe
+        df.at[index,ACorDC+'-true-angles'] = dip
+        df.at[index,ACorDC+'-true-scores'] = score
+        df.at[index,ACorDC+'-true-orientations'] = orientation
+        
+        
+
+# save dataframe
+df.to_pickle('../../data/angles/'+core+'deep_angles.df')
+
+# save a small array with just the mean side and true angles
+df2 = df[['section','depth','AC-mean-angle', 'AC-tr-mean-angle',
+'AC-r-mean-angle']]
+df2.to_csv('../../data/angles/'+core+'_deepangles_means.csv',index=False)
+
+

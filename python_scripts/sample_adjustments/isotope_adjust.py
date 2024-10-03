@@ -14,13 +14,13 @@ import pandas as pd
 
 #%% Set filepaths
 
-path_to_data = '../../data/sampling/coordinates/'
+path_to_data = '../../data/sampling/water_iso/'
 warning_threshold = [0.5,1.5]
 
 #%% Load data
 
-df = pd.read_excel(path_to_data+'isotope_depths.xlsx', sheet_name='sample_thicknesses',index_col=0)
-meta = pd.read_excel(path_to_data+'isotope_depths.xlsx', sheet_name='metadata',index_col=0)
+df = pd.read_excel(path_to_data+'water_iso_depths.xlsx', sheet_name='sample_thicknesses',index_col=0)
+meta = pd.read_excel(path_to_data+'water_iso_depths.xlsx', sheet_name='metadata',index_col=0)
 
 #%% Function to add column to DF (thanks chatGPT)
 
@@ -93,8 +93,9 @@ for s in df.columns[0:]:
     output = add_column_to_df(output, s_bd, s+'_bd')
 
 # write to excel sheet
-with pd.ExcelWriter(path_to_data+'isotope_depths.xlsx',
+# NOTE - THIS CURRENTLY DOESN'T WORK. It fails to write over the existing tab.
+with pd.ExcelWriter(path_to_data+'water_iso_depths.xlsx',
                     mode='a', engine='openpyxl',
                     if_sheet_exists='replace') as writer:
-    output.to_excel(writer, sheet_name='Depths')
+    output.to_excel(writer, sheet_name='depths')
         

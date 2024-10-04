@@ -8,7 +8,8 @@ Make 3D ECM plot for paper
 @author: Liam
 """
 
-#%% Import packages 
+#%%
+# Import packages 
 
 # general
 import numpy as np
@@ -25,8 +26,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.ticker import StrMethodFormatter
 import matplotlib.ticker as ticker
-
-
 
 # my functions/classes
 import sys

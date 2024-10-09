@@ -128,7 +128,7 @@ def truedip(core,side,o_lost,title):
                     a2=side_angle[j]
                     score.append((top_score[i]**2)*(side_score[j]**2)*top_length[i]*side_length[j])
                     eps = np.arctan( 1/np.tan(a1*np.pi/180) * np.tan(a2 * np.pi/180)) * 180/np.pi
-                    true = np.arctan(np.tan(a1 * np.pi/180) / np.sin((90-eps)*np.pi/180))* 180/np.pi
+                    true = np.arctan(np.tan(a1 * np.pi/180) / np.cos(eps*np.pi/180))* 180/np.pi
                     eps = eps+90
                     if true<0:
                         eps = eps+180

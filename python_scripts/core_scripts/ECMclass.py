@@ -207,7 +207,8 @@ class ECM:
 
 if __name__ == "__main__":
     
-    test = ECM('alhic2201','10_1','t','AC')
+    #test = ECM('alhic2201','10_1','t','AC')
+    test = ECM('alhic2302','159_3','t','AC')
     
     test.smooth(1)
     

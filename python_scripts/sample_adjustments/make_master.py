@@ -47,8 +47,6 @@ for d in discrete_datasets:
     # pick out sticks
     #sticks = meta['stick'].to_list()
 
-
-
     # loop through sticks
     for s in meta.index:
 

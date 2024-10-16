@@ -38,18 +38,21 @@ for stick in sticks:
             df = pd.read_csv(path_to_data + core + '-' + section + '-'+stick+'.csv')
             df['core'] = core
             df['section'] = section
-            df['stick'] = stick
+            df['cut'] = stick
         else:
             df2 = pd.read_csv(path_to_data + core + '-' + section + '-'+stick+'.csv')
             df2['core'] = core
             df2['section'] = section
-            df2['stick'] = stick
+            df2['cut'] = stick
             df = pd.concat([df,df2],axis=0)
         
         cnt+=1
 df['ave_depth'] = df['Depth (cm)']/100
-df = df.drop(columns=['Depth (cm)'])
+df['ave_depth_adj'] = df['Depth (cm)']/100
+df['y_m'] = 0
+df['x_m'] = 0
 
+df = df.drop(columns=['Depth (cm)'])
 
 # load angle data
 core = 'alhic2302'
@@ -87,17 +90,19 @@ for stick in sticks:
             print("Angle not found for section "+ section)
             run_angle = False
 
-        
-        # apply shift, add to master dataframe
+        df.loc[(df['core'] == core) & (df['section'] == section) & (df['cut'] == stick), 'ave_depth'] += top_depth
         if run_angle:
-            depths = df.loc[(df['core']==core) & (df['section']==section) & (df['stick']==stick),'depth']
-            df['ave_depth_adj'] = depths + shift/1000
+            df.loc[(df['core'] == core) & (df['section'] == section) & (df['cut'] == stick), 'ave_depth_adj'] += top_depth+shift/1000
+            df.loc[(df['core'] == core) & (df['section'] == section) & (df['cut'] == stick), 'y_m'] += y/1000
+            df.loc[(df['core'] == core) & (df['section'] == section) & (df['cut'] == stick), 'x_m'] += x/1000
+        else:
+            df.loc[(df['core'] == core) & (df['section'] == section) & (df['cut'] == stick), 'ave_depth_adj'] = np.nan
 
 # %%
 # wrap up - reordering columns, saving to csv
 
 # reorder columns
-columns_to_move = ['core','section','stick','depth','depth_adjusted']
+columns_to_move = ['core','section','cut','ave_depth','ave_depth_adj','y_m','x_m']
 columns = df.columns.tolist()
 for col in columns_to_move:
     columns.remove(col)

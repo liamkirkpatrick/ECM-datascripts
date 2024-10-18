@@ -306,12 +306,20 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
     # Plot Samples
     # filter for the correct section
     sec_proxy_df = proxy_df[(proxy_df['section'] == sec)&(proxy_df['core'] == core)]
+
     # loop through all of the proxy
     prox_cnt = 0
     for proxy in proxies:
 
         # filter df for this proxy
         df_prox = sec_proxy_df[sec_proxy_df[proxy].notna()]
+
+        if proxy == 'Dust Concentration':
+            smooth_int = 10
+        elif proxy == 'Liquid Conductivity':
+            smooth_int = 10
+        else:
+            smooth_int = 0
 
         # now we have to loop through each stick
         cuts = df_prox['cut'].unique()
@@ -330,6 +338,7 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
                 val = df_cut[proxy].to_numpy()
                 y = df_cut['y_m'].to_numpy()
                 x = df_cut['x_m'].to_numpy()
+
                 # need to impliment something to check the cut is consistent through the stick 
                 # - here I assume the first sample is representative. Should be true regardless
                 # but is still worth checking
@@ -338,7 +347,11 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
                 shift = y_shift + x_shift
 
                 # plot on dedicated subplot
-                ax[3+prox_cnt].plot(val,ave_depth+shift,color=cmap_line(c_cnt),label=c)
+                if smooth_int==0:
+                    ax[3+prox_cnt].plot(val,ave_depth+shift,color=cmap_line(c_cnt),label=c)
+                else:
+                    ax[3+prox_cnt].plot(pd.Series(val).rolling(smooth_int).mean(),ave_depth+shift,color=cmap_line(c_cnt),label=c+' - '+str(smooth_int)+'pt smooth')
+
                 # only plot sample thickness where availible
                 if ~np.any(np.isnan(top_depth)):
                     for i in range(len(top_depth)):

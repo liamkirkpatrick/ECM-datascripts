@@ -54,7 +54,7 @@ window = 10
 #%% set up colormap
 
 # make colormap
-cmap = matplotlib.colormaps.get_cmap('coolwarm')
+cmap = matplotlib.colormaps.get_cmap('PiYG')
 
 #%% Read in metadata and import data - ALHIC2302
 

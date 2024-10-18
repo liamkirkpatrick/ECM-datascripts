@@ -30,8 +30,8 @@ from matplotlib.patches import Rectangle
 import moviepy.video.io.ImageSequenceClip
 import moviepy.editor as mp
 #from PIL import Image
-import PIL
-PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
+# import PIL
+# PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
 
 # my functions/classes
 import sys
@@ -50,8 +50,8 @@ def ensure_even_dimensions(clip):
 # User Inputs
 
 # set which plots to make
-make_singles = False
-make_annimations = True
+make_singles = True
+make_annimations = False
 
 # smoothing window, mm
 window = 20
@@ -66,12 +66,11 @@ path_to_angle = '../../data/angles/'
 path_to_proxies = '../../data/sampling/'
 
 
-# ONE BIG PLOT
-indplots = True
 
 # set sections to run
 to_run = ['155_2','156_2','158','159_3']
 #to_run = ['159_3']
+#to_run = ['156_2']
 
 #%% 
 # Read in metadata and import data
@@ -121,12 +120,12 @@ df = pd.read_csv(path_to_angle+core+'_deepangles_means.csv',index_col=0)
 #%% 
 # Load Proxies
 
-proxy_list = ['water_iso']
+proxy_list = ['water_iso','dartmouth_cfa']
 proxy_df = pd.read_csv(path_to_proxies+proxy_list[0]+'/master_'+proxy_list[0]+'.csv',index_col=0)
 if len(proxy_list)>0:
     for d in proxy_list[1:]:
-        new_df = pd.read_csv(path_to_proxies+d+'/master'+d+'.csv',index_col=0)
-        proxy_df = pd.concat([proxy_df, df2], axis=0, join='outer', ignore_index=True)
+        new_df = pd.read_csv(path_to_proxies+d+'/master_'+d+'.csv')
+        proxy_df = pd.concat([proxy_df, new_df], axis=0, join='outer', ignore_index=True)
 
 
 
@@ -199,11 +198,6 @@ my_cmap = matplotlib.colormaps['Spectral']
 cmap_line = matplotlib.colormaps['tab10']
 
 
-
-        
-
-
-
 #%%
 # Define function
 
@@ -238,8 +232,8 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
     ACpltmin = np.percentile(AC_all,5)
     ACpltmax = np.percentile(AC_all,95)
     ACrescale = lambda k: (k-ACpltmin) /  (ACpltmax-ACpltmin)
-    dmin = min(minvec)-0.1
-    dmax = max(maxvec)+0.1
+    dmin = min(minvec)-0.25
+    dmax = max(maxvec)+0.25
 
     # Make Figure - ECM
 
@@ -286,7 +280,7 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
         # remove y-axis labels for middle plots if there are more than 2
         if len(proxies)>2:
             for i in range(len(proxies)-2):
-                ax[i+4].yaxis.set_ticks([])
+                #ax[i+4].yaxis.set_ticks([])
                 ax[i+4].set_yticklabels([]) 
     
     # Plot ECM
@@ -315,11 +309,12 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
     # loop through all of the proxy
     prox_cnt = 0
     for proxy in proxies:
+
         # filter df for this proxy
         df_prox = sec_proxy_df[sec_proxy_df[proxy].notna()]
 
         # now we have to loop through each stick
-        cuts = sec_proxy_df['cut'].unique()
+        cuts = df_prox['cut'].unique()
         c_cnt = 0
         for c in cuts:
 
@@ -331,7 +326,7 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
                 # pull out the desired info
                 top_depth = df_cut['top_depth'].to_numpy()
                 bot_depth = df_cut['bottom_depth'].to_numpy()
-                ave_depth = (top_depth + bot_depth)/2
+                ave_depth = df_cut['ave_depth'].to_numpy()
                 val = df_cut[proxy].to_numpy()
                 y = df_cut['y_m'].to_numpy()
                 x = df_cut['x_m'].to_numpy()
@@ -344,16 +339,20 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
 
                 # plot on dedicated subplot
                 ax[3+prox_cnt].plot(val,ave_depth+shift,color=cmap_line(c_cnt),label=c)
-                for i in range(len(top_depth)):
-
-                    ax[3+prox_cnt].plot([val[i],val[i]],[top_depth[i]+shift,bot_depth[i]+shift],color=cmap_line(c_cnt))
+                # only plot sample thickness where availible
+                if ~np.any(np.isnan(top_depth)):
+                    for i in range(len(top_depth)):
+                        ax[3+prox_cnt].plot([val[i],val[i]],[top_depth[i]+shift,bot_depth[i]+shift],color=cmap_line(c_cnt))
 
                 ax[3+prox_cnt].legend()
-
 
             # increment Counter
             c_cnt+=1
 
+        if proxy == 'Dust Concentration':
+            ax[3+prox_cnt].set_xlim([0,1000])
+        if proxy == 'Liquid Conductivity':
+            ax[3+prox_cnt].set_xlim([1,2.5])
 
         # increment counter
         prox_cnt+=1
@@ -384,31 +383,39 @@ if make_singles:
     # print update
     print("Running Single Plots")
 
-    # Specify proxies to plot
-    proxies=['d18O','dxs']
-
     # set resolution (0 is default of measurment resolution)
-    res = 0
+    res = 0.002
 
-    # loop through sections
-    for sec in unique(sections):
+    prox_combos = [['d18O','Liquid Conductivity','Dust Concentration'],['d18O','dD','dxs']]
 
-        # set angles to run
-        tr_angle = [0,0,float(df.at[sec,'AC-tr-mean-angle']),float(df.at[sec,'AC-tr-mean-angle'])]
-        r_angle = [0,float(df.at[sec,'AC-r-mean-angle']),0,float(df.at[sec,'AC-r-mean-angle'])]
+    for proxies in prox_combos:
+
+        print("    Running Proxies: "+str(proxies))
         
-        for tr_a, r_a in zip(tr_angle,r_angle):
+        # loop through sections
+        for sec in unique(sections):
 
-            # print update
-            print("    Running Section "+sec+' - tr='+str(round(tr_a))+' - r='+str(round(r_a)))
+            # set angles to run
+            #tr_angle = [0,0,float(df.at[sec,'AC-tr-mean-angle']),float(df.at[sec,'AC-tr-mean-angle'])]
+            #r_angle = [0,float(df.at[sec,'AC-r-mean-angle']),0,float(df.at[sec,'AC-r-mean-angle'])]
+            tr_angle = [0,float(df.at[sec,'AC-tr-mean-angle'])]
+            r_angle = [0,float(df.at[sec,'AC-r-mean-angle'])]
             
-            # run plot script
-            fig = plot_script(sec,tr_a,r_a,data,proxies,res)
-            
-            #save figure
-            fname = path_to_figures +'alhic2302-'+sec+'_tr='+str(round(tr_a))+'_r='+str(round(r_a))+'.png'
-            fig.savefig(fname,bbox_inches='tight')
-            plt.close(fig)
+            for tr_a, r_a in zip(tr_angle,r_angle):
+
+                # print update
+                print("        Running Section "+sec+' - tr='+str(round(tr_a))+' - r='+str(round(r_a)))
+                
+                # run plot script
+                fig = plot_script(sec,tr_a,r_a,data,proxies,res)
+                
+                #save figure
+                prox = ''
+                for p in proxies:
+                    prox += '-'+p
+                fname = path_to_figures +sec+'/'+'alhic2302-'+sec+'-tr='+str(round(tr_a))+'-r='+str(round(r_a))+prox+'.png'
+                fig.savefig(fname,bbox_inches='tight')
+                plt.close(fig)
 
 #%% 
 # Make some annimations
@@ -419,10 +426,10 @@ if make_annimations:
     print("Plotting Annimations")
 
     # Specify proxies to plot
-    proxies=['d18O','dxs']
+    proxies=['d18O','dD','dxs']
 
     # set resolution
-    res = 0.002
+    res = 0.004
 
         # loop through sections
     for sec in unique(sections):
@@ -447,13 +454,13 @@ if make_annimations:
         fig_cnt = 1
         
         # make vectors of tr angles and r angles
-        angle_res = 0.2
+        angle_res = 0.4
         tr_final = float(df.at[sec,'AC-tr-mean-angle'])
         r_final = float(df.at[sec,'AC-r-mean-angle'])
-        phase1_cnt = round(abs(tr_final/angle_res))+1
-        phase2_cnt = round(abs(r_final/angle_res))+1
+        phase1_cnt = round(abs(r_final/angle_res))+1
+        phase2_cnt = round(abs(tr_final/angle_res))+1
         tr_angle = np.concatenate((np.zeros(phase1_cnt),np.linspace(0,tr_final,phase2_cnt)))
-        r_angle = np.concatenate((np.linspace(0,r_final,phase1_cnt),np.ones(phase2_cnt)+r_final))
+        r_angle = np.concatenate((np.linspace(0,r_final,phase1_cnt),np.ones(phase2_cnt)*r_final))
         
         #tr_angle = [0,0,float(df.at[sec,'AC-tr-mean-angle']),float(df.at[sec,'AC-tr-mean-angle'])]
         #r_angle = [0,float(df.at[sec,'AC-r-mean-angle']),0,float(df.at[sec,'AC-r-mean-angle'])]
@@ -468,7 +475,7 @@ if make_annimations:
             fig = plot_script(sec,tr_a,r_a,data,proxies,res)
             
             #save figure
-            fname = path_to_annimations+'/'+sec+'/alhic2302-'+sec+'-'+str(fig_cnt)+'.png'
+            fname = path_to_annimations+sec+'/alhic2302-'+sec+'-'+str(fig_cnt)+'.png'
             fig.savefig(fname,bbox_inches='tight')
             plt.close(fig)
 
@@ -484,13 +491,8 @@ if make_annimations:
         image_names = sorted(image_names, key=lambda x: int(re.findall(r'\d+', x)[-1]))
         image_files = [os.path.join(folder_path,img)
                     for img in image_names]
-    
-
         clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(image_files,fps=30)
-
-
-
         clip = ensure_even_dimensions(clip)
-        clip.write_videofile(folder_path+sec+'_movie.mp4',fps=24)
+        clip.write_videofile(folder_path+sec+'_movie.mp4',fps=12)
 
 # %%

@@ -49,9 +49,12 @@ def ensure_even_dimensions(clip):
 #%% 
 # User Inputs
 
+# set 158 angle manually
+set158 = -50
+
 # set which plots to make
 make_singles = True
-make_annimations = False
+make_annimations = True
 
 # smoothing window, mm
 window = 20
@@ -68,9 +71,14 @@ path_to_proxies = '../../data/sampling/'
 
 
 # set sections to run
-to_run = ['155_2','156_2','158','159_3']
-#to_run = ['159_3']
-#to_run = ['156_2']
+sec_to_run = ['155_2','156_2','158','159_3','230_4']
+core_to_run = ['alhic2302','alhic2302','alhic2302','alhic2302','alhic1901']
+#sec_to_run = ['230_4']
+#core_to_run = ['alhic1901']
+
+# manually set 230_4 angles
+top_230_4 = 30
+right_230_4 = -30
 
 #%% 
 # Read in metadata and import data
@@ -94,11 +102,58 @@ for index,row in meta.iterrows():
         face = row['face']
         ACorDC = row['ACorDC']
         
-        data_item = ECM(core,section,face,ACorDC)
-        
-        if section in to_run and ACorDC == 'AC' and (face == 'r' or face == 'tr'):
+        if section in sec_to_run and ACorDC == 'AC' and (face == 'r' or face == 'tr'):
+
+            data_item = ECM(core,section,face,ACorDC)
             print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
             
+            data_item.rem_ends(10)
+            data_item.smooth(window)
+            data.append(data_item)
+            data_item.norm_all()
+            
+            cores.append(core)
+            sections.append(section)
+            faces.append(face)
+            ACorDCs.append(ACorDC)
+
+    if core == 'alhic1901':
+        
+        section = row['section']
+        face = row['face']
+        ACorDC = row['ACorDC']
+        
+        
+        if section in sec_to_run and ACorDC == 'AC' and (face == 'r' or face == 't'):
+
+            data_item = ECM(core,section,face,ACorDC)
+            print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
+
+            # if face is t, must trim half of values
+            if face =='t':
+
+                # get midpoint on core and index of all values which lie below this
+                mid = np.median(data_item.y_vec)
+                idx = data_item.y <= mid
+                
+                # adjust y_right and yvec
+                data_item.y_right = mid + (data_item.y_right-max(data_item.y_vec))
+                data_item.y_vec = data_item.y_vec[data_item.y_vec<=mid]
+
+
+                # filter for data rows below mid
+                data_item.y = data_item.y[idx]
+                data_item.depth = data_item.depth[idx]
+                data_item.meas = data_item.meas[idx]
+                data_item.button = data_item.button[idx]
+
+            # if face is 'r', mut adjust depth down by ~0.12m
+            elif face == 'r':
+                data_item.depth = data_item.depth + 0.009
+            else:
+                print("ERROR: Face not recognized")
+
+
             data_item.rem_ends(10)
             data_item.smooth(window)
             data.append(data_item)
@@ -157,7 +212,7 @@ def plotquarter(y_vec,ycor,d,meas,button,axs,rescale,angle,face,res):
             tbut = np.round(but_interp)
 
         
-        if face == 'tr':
+        if face == 'tr' or face == 't':
             offset = y
         else:
             offset = -y
@@ -168,8 +223,8 @@ def plotquarter(y_vec,ycor,d,meas,button,axs,rescale,angle,face,res):
             
             if tbut[i] == 0:
                 axs.add_patch(Rectangle((y-(width-0.2)/2,td[i]),(width-0.2),td[i+1]-td[i],facecolor=my_cmap(rescale(tmeas[i]))))
-            # else:
-            #     axs.add_patch(Rectangle((y-(width-0.2)/2,td[i]),(width-0.2),td[i+1]-td[i],facecolor='k'))
+            else:
+                axs.add_patch(Rectangle((y-(width-0.2)/2,td[i]),(width-0.2),td[i+1]-td[i],facecolor=my_cmap(rescale(tmeas[i]))))
             
     return()
 
@@ -201,7 +256,7 @@ cmap_line = matplotlib.colormaps['tab10']
 #%%
 # Define function
 
-def plot_script(sec,tr_a,r_a,data,proxies,res):
+def plot_script(core,sec,tr_a,r_a,data,proxies,res):
     
     # set data to empty
     AC_t = None
@@ -216,7 +271,13 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
                 if d.face == 'tr':
                     AC_t = d
                 if d.face == 'r':
-                    AC_r = d                    
+                    AC_r = d 
+        if d.core=='alhic1901':
+            if d.section==sec:
+                if d.face == 't':
+                    AC_t = d
+                if d.face == 'r':
+                    AC_r = d                   
     
     # find depth max and minimum
     minvec = []
@@ -251,11 +312,16 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
     ax[0].set_xlim([110, 0])
     ax[1].yaxis.tick_right()
     ax[1].yaxis.set_label_position("right")
+    #if sec=='230_4':
+    #    ax[1].set_xlim([0,240])
+    #else:
     ax[1].set_xlim([0,110])
     for a in [ax[0],ax[1]]:
         a.set_ylabel('Depth (m)')
         a.set_xlabel('Distance From Center (mm)',fontsize=6)
         a.set_ylim([dmax, dmin])
+
+
     
     # blank subplot admin
     if len(proxies)>0:
@@ -371,8 +437,12 @@ def plot_script(sec,tr_a,r_a,data,proxies,res):
         prox_cnt+=1
 
 
+    if sec=='158' and 'Dust Concentration' in proxies:
+        ax[5].set_xlim([0,300])
+
     # Plot housekeeping
-    fig.suptitle('ALHIC2302 - '+sec+' - tr='+str(round(tr_a))+'- r='+str(round(r_a)))
+    core = AC_t.core
+    fig.suptitle(core+' - '+sec+' - tr='+str(round(tr_a))+'- r='+str(round(r_a)))
     ax[0].set_title('AC - Right')
     ax[1].set_title('AC - Top')
     for a in ax:
@@ -399,7 +469,7 @@ if make_singles:
     # set resolution (0 is default of measurment resolution)
     res = 0.002
 
-    prox_combos = [['d18O','Liquid Conductivity','Dust Concentration'],['d18O','dD','dxs']]
+    prox_combos = [['d18O','Liquid Conductivity','Dust Concentration'],['d18O','dD','dxs','dln']]
 
     for proxies in prox_combos:
 
@@ -411,8 +481,18 @@ if make_singles:
             # set angles to run
             #tr_angle = [0,0,float(df.at[sec,'AC-tr-mean-angle']),float(df.at[sec,'AC-tr-mean-angle'])]
             #r_angle = [0,float(df.at[sec,'AC-r-mean-angle']),0,float(df.at[sec,'AC-r-mean-angle'])]
-            tr_angle = [0,float(df.at[sec,'AC-tr-mean-angle'])]
-            r_angle = [0,float(df.at[sec,'AC-r-mean-angle'])]
+            if sec == '230_4':
+                tr_angle = [0,top_230_4]
+                r_angle = [0,right_230_4]
+                core = 'alhic1901'
+            else:
+                tr_angle = [0,float(df.at[sec,'AC-tr-mean-angle'])]
+                r_angle = [0,float(df.at[sec,'AC-r-mean-angle'])]
+                core = 'alhic2302'
+
+            if sec == '158':
+                tr_angle = [0,-50]
+                r_angle = [0,0]
             
             for tr_a, r_a in zip(tr_angle,r_angle):
 
@@ -420,7 +500,7 @@ if make_singles:
                 print("        Running Section "+sec+' - tr='+str(round(tr_a))+' - r='+str(round(r_a)))
                 
                 # run plot script
-                fig = plot_script(sec,tr_a,r_a,data,proxies,res)
+                fig = plot_script(core,sec,tr_a,r_a,data,proxies,res)
                 
                 #save figure
                 prox = ''
@@ -442,10 +522,15 @@ if make_annimations:
     proxies=['d18O','dD','dxs']
 
     # set resolution
-    res = 0.004
+    res = 0.005
 
         # loop through sections
     for sec in unique(sections):
+
+        if sec == '230_4':
+            core = 'alhic1901'
+        else:
+            core = 'alhic2302'
 
         # set folder path
         folder_path = path_to_annimations+'/'+sec+'/'
@@ -468,15 +553,23 @@ if make_annimations:
         
         # make vectors of tr angles and r angles
         angle_res = 0.4
-        tr_final = float(df.at[sec,'AC-tr-mean-angle'])
-        r_final = float(df.at[sec,'AC-r-mean-angle'])
+        if sec == '230_4':
+            tr_final = top_230_4
+            r_final = right_230_4
+            core = 'alhic1901'
+        else:
+            tr_final = float(df.at[sec,'AC-tr-mean-angle'])
+            r_final = float(df.at[sec,'AC-r-mean-angle'])
+            core = 'alhic2302'
+
+        if sec == '158':
+            tr_final = -50
+            r_final = 0
+
         phase1_cnt = round(abs(r_final/angle_res))+1
         phase2_cnt = round(abs(tr_final/angle_res))+1
         tr_angle = np.concatenate((np.zeros(phase1_cnt),np.linspace(0,tr_final,phase2_cnt)))
         r_angle = np.concatenate((np.linspace(0,r_final,phase1_cnt),np.ones(phase2_cnt)*r_final))
-        
-        #tr_angle = [0,0,float(df.at[sec,'AC-tr-mean-angle']),float(df.at[sec,'AC-tr-mean-angle'])]
-        #r_angle = [0,float(df.at[sec,'AC-r-mean-angle']),0,float(df.at[sec,'AC-r-mean-angle'])]
         
         # loop through angles
         for tr_a, r_a in zip(tr_angle,r_angle):
@@ -485,7 +578,7 @@ if make_annimations:
             print("        Plotting subplot "+str(fig_cnt)+" of "+str(len(tr_angle)))
             
             # run plot script
-            fig = plot_script(sec,tr_a,r_a,data,proxies,res)
+            fig = plot_script(core,sec,tr_a,r_a,data,proxies,res)
             
             #save figure
             fname = path_to_annimations+sec+'/alhic2302-'+sec+'-'+str(fig_cnt)+'.png'

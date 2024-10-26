@@ -9,20 +9,23 @@ file structure as .npy files
 @author: Liam
 """
 
-#%% Import packages
+#%% 
+# Import packages
 
 import numpy as np
 import pandas as pd
 import os
 
 
-#%% User Inputs
+#%% 
+# User Inputs
 
 path_to_data = '../../data/'
 path_to_raw = '/Users/Liam/Desktop/UW/ECM/raw_data/'
 metadata_file = 'metadata.csv'
 
-dates = ['2024-03-19','2024-03-20','2024-03-21','2024-03-22','2024-04-08',
+dates = ['2023-08-25']
+trash = ['2024-03-19','2024-03-20','2024-03-21','2024-03-22','2024-04-08',
           '2024-04-09','2024-04-10','2024-04-11','2024-04-12','2024-04-15',
           '2024-04-16','2024-04-17','2024-04-18','2024-04-19',"2024-07-09",
           "2024-07-10",
@@ -79,7 +82,8 @@ if os.path.exists(path_to_data+metadata_file):
 else:
     df = pd.DataFrame(columns=headers)
 
-#%% Get list of all file names
+#%% 
+# Get list of all file names
 
 txt_files = []
 for date in dates:
@@ -92,9 +96,12 @@ for date in dates:
 
 
 
-#%% Populate dataframe
+#%% 
+# Populate dataframe
 
 for f in txt_files:
+
+    print("Running file: "+f)
     
     # open file
     
@@ -174,10 +181,8 @@ df.to_csv(path_to_data+metadata_file)
 
 #%% Save CSV with edited depth
 
-
 # loop through all rows in dataframe 
 for index,row in df.iterrows():
-    
     
     # read in raw data
     raw = pd.read_csv(row['filename'],header = row['header']-1)

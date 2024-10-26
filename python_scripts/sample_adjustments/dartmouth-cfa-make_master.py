@@ -20,8 +20,8 @@ import pandas as pd
 path_to_data = '../../data/sampling/dartmouth_cfa/'
 path_to_angle = '../../data/angles/'
 
-cores = ['alhic2302','alhic2302','alhic2302','alhic2302']
-sections = ['155_2','156_2','158','159_3',]
+cores = ['alhic2302','alhic2302','alhic2302','alhic2302','alhic1901']
+sections = ['155_2','156_2','158','159_3','230_4']
 sticks = ['stick1','stick2']
 
 #%%
@@ -89,6 +89,26 @@ for stick in sticks:
         else:
             print("Angle not found for section "+ section)
             run_angle = False
+
+
+            if section == '230_4':
+                run_angle = True
+                x_angle = -30
+                y_angle = -30
+                
+                # get cut data
+                meta_row = meta[(meta['core']==core) & (meta['section']==section) & (meta['stick']==stick)]
+                y = (meta_row['y_hi'].to_numpy() + meta_row['y_lo'].to_numpy())/2
+                x = (meta_row['x_hi'].to_numpy() + meta_row['x_lo'].to_numpy())/2
+                top_depth = meta_row['top_depth'].to_numpy() + meta_row['offset_mm'].to_numpy()/1000
+                #print(meta_row)
+
+                # compute shift due to layer angle adjustment
+                y_shift = -y * np.tan(y_angle*np.pi/180)
+                x_shift = x * np.tan(x_angle*np.pi/180)
+                shift = y_shift + x_shift
+
+                print("Shift for section "+ section + " is "+str(shift))
 
         df.loc[(df['core'] == core) & (df['section'] == section) & (df['cut'] == stick), 'ave_depth'] += top_depth
         if run_angle:

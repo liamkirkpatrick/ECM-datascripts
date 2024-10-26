@@ -89,7 +89,7 @@ for index,row in meta.iterrows():
         if section in to_run and ACorDC == 'AC' and (face == 'r' or face == 'tr'):
             print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
             
-            data_item.rem_ends(15)
+            data_item.rem_ends(20)
             data_item.smooth(window)
             data.append(data_item)
             

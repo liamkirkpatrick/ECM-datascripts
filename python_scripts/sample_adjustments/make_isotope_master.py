@@ -59,6 +59,11 @@ for s in meta.index:
     section = parts[1]
     cut = parts[2]
 
+    if debug:
+        print("    Core: "+core)
+        print("    Section: "+section)
+        print("    Cut: "+cut)
+
     # pull out x and y dimension
 
     # assign angles
@@ -72,6 +77,12 @@ for s in meta.index:
         y = (meta.at[s,'y_hi'] + meta.at[s,'y_lo'])/2
         x = (meta.at[s,'x_hi'] + meta.at[s,'x_lo'])/2
 
+        if debug:
+            print("    y_angle = "+str(y_angle))
+            print("    x_angle = "+str(x_angle))
+            print("    y = "+str(y))
+            print("    x = "+str(x))
+
         # compute shift due to layer angle adjustment
         y_shift = -y * np.tan(y_angle*np.pi/180)
         x_shift = x * np.tan(x_angle*np.pi/180)
@@ -81,7 +92,7 @@ for s in meta.index:
             print("    X_shift = "+str(round(x_shift,3)))
 
     else:
-        run_angle = False
+
 
         if section == '230_4':
             run_angle = True
@@ -100,6 +111,10 @@ for s in meta.index:
                 print("    Y_shift = "+str(round(y_shift,3)))
                 print("    X_shift = "+str(round(x_shift,3)))
 
+        else:
+            print("    ERROR")
+            print("    No angle data for this section")
+            run_angle = False
 
     
     td = depths[s+'_td']
@@ -122,6 +137,7 @@ for s in meta.index:
         values.loc[s+'-'+str(i+1),'ave_depth'] = (td[i]+bd[i])/2
 
         # add depths (dip adjusted) and x/y dimension
+        #print("    Run Angle = "+str(run_angle))
         if run_angle:
             values.loc[s+'-'+str(i+1),'top_depth_adj'] = td[i]+shift/1000
             values.loc[s+'-'+str(i+1),'bottom_depth_adj'] = bd[i]+shift/1000

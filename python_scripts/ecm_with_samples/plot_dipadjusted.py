@@ -317,7 +317,7 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
     #else:
     ax[1].set_xlim([0,110])
     for a in [ax[0],ax[1]]:
-        a.set_ylabel('Depth (m)')
+        a.set_ylabel('Dip-Adjusted Depth (m)')
         a.set_xlabel('Distance From Center (mm)',fontsize=6)
         a.set_ylim([dmax, dmin])
 
@@ -330,7 +330,7 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
     # proxy subplot admin
     if len(proxies)>0:
         
-        ax[3].set_ylabel('Depth (m)')
+        ax[3].set_ylabel('Dip-Adjusted Depth (m)')
         ax[3].yaxis.set_label_position('left')
         ax[3].set_ylim([dmax, dmin])
         
@@ -389,7 +389,11 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
 
         # now we have to loop through each stick
         cuts = df_prox['cut'].unique()
+        # remove 'stick2' from cut list if proxy is 'd18O','dD','dxs','dln'
+        if proxy in ['d18O', 'dD', 'dxs', 'dln']:
+            cuts = [c for c in cuts if c != 'stick2']
         c_cnt = 0
+        
         for c in cuts:
 
             # filter for this cut

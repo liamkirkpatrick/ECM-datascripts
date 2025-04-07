@@ -54,7 +54,7 @@ set158 = -50
 
 # set which plots to make
 make_singles = True
-make_annimations = True
+make_annimations = False
 
 # smoothing window, mm
 window = 20
@@ -175,7 +175,7 @@ df = pd.read_csv(path_to_angle+core+'_deepangles_means.csv',index_col=0)
 #%% 
 # Load Proxies
 
-proxy_list = ['water_iso','dartmouth_cfa']
+proxy_list = ['water_iso','dartmouth_cfa','argon','ghg']
 proxy_df = pd.read_csv(path_to_proxies+proxy_list[0]+'/master_'+proxy_list[0]+'.csv',index_col=0)
 if len(proxy_list)>0:
     for d in proxy_list[1:]:
@@ -436,6 +436,8 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
             ax[3+prox_cnt].set_xlim([0,1000])
         if proxy == 'Liquid Conductivity':
             ax[3+prox_cnt].set_xlim([1,2.5])
+        if proxy == 'Ar_Age_kyr':
+            ax[3+prox_cnt].set_xlim([500,2000])
 
         # increment counter
         prox_cnt+=1
@@ -473,7 +475,10 @@ if make_singles:
     # set resolution (0 is default of measurment resolution)
     res = 0.002
 
-    prox_combos = [['d18O','Liquid Conductivity','Dust Concentration'],['d18O','dD','dxs','dln']]
+    prox_combos = [['d18O','Liquid Conductivity','Dust Concentration'],
+                   ['d18O','dD','dxs','dln'],
+                   ['d18O','Ar_Age_kyr'],
+                   ['d18O','Ar_Age_kyr','CO2','CH4']]
 
     for proxies in prox_combos:
 

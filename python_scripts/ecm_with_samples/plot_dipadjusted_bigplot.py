@@ -71,14 +71,10 @@ path_to_proxies = '../../data/sampling/'
 
 
 # set sections to run
-sec_to_run = ['155_2','156_2','158','159_3','230_4']
-core_to_run = ['alhic2302','alhic2302','alhic2302','alhic2302','alhic1901']
-#sec_to_run = ['230_4']
-#core_to_run = ['alhic1901']
+sec_to_run = ['155_2','156_2','158','159_3']
+core_to_run = ['alhic2302','alhic2302','alhic2302','alhic2302']
 
-# manually set 230_4 angles
-top_230_4 = 30
-right_230_4 = -30
+
 
 #%% 
 # Read in metadata and import data
@@ -175,7 +171,7 @@ df = pd.read_csv(path_to_angle+core+'_deepangles_means.csv',index_col=0)
 #%% 
 # Load Proxies
 
-proxy_list = ['water_iso','dartmouth_cfa','argon','ghg','icpms']
+proxy_list = ['water_iso','dartmouth_cfa','argon','icpms']
 proxy_df = pd.read_csv(path_to_proxies+proxy_list[0]+'/master_'+proxy_list[0]+'.csv',index_col=0)
 if len(proxy_list)>0:
     for d in proxy_list[1:]:
@@ -256,7 +252,7 @@ cmap_line = matplotlib.colormaps['tab10']
 #%%
 # Define function
 
-def plot_script(core,sec,tr_a,r_a,data,proxies,res):
+def plot_script(core,sec,tr_a,r_a,data,proxies,res,fig,ax):
     
     # set data to empty
     AC_t = None
@@ -296,32 +292,16 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
     dmin = min(minvec)-0.25
     dmax = max(maxvec)+0.25
 
-    # Make Figure - ECM
-
-    # Actually make figure (sized for number of proxies to plot)
-    ratios = [3,3]
-    numplots=2
-    if len(proxies)>0:
-        ratios.append(1.5)
-        numplots=3+len(proxies)
-    for i in range(len(proxies)):
-        ratios.append(2.5)
-    fig, ax = plt.subplots(1, numplots,figsize=(8+len(proxies)*3,8),gridspec_kw={'width_ratios': ratios},dpi=100)
-    
     # ECM subplot admin
     ax[0].set_xlim([110, 0])
     ax[1].yaxis.tick_right()
     ax[1].yaxis.set_label_position("right")
-    #if sec=='230_4':
-    #    ax[1].set_xlim([0,240])
+
     #else:
     ax[1].set_xlim([0,110])
     for a in [ax[0],ax[1]]:
         a.set_ylabel('Dip-Adjusted Depth (m)')
         a.set_xlabel('Distance From Center (mm)',fontsize=6)
-        a.set_ylim([dmax, dmin])
-
-
     
     # blank subplot admin
     if len(proxies)>0:
@@ -332,7 +312,7 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
         
         ax[3].set_ylabel('Dip-Adjusted Depth (m)')
         ax[3].yaxis.set_label_position('left')
-        ax[3].set_ylim([dmax, dmin])
+        a#x[3].set_ylim([dmax, dmin])
         
         ax[len(proxies)+2].yaxis.set_label_position('right')
         ax[len(proxies)+2].yaxis.tick_right()
@@ -341,7 +321,6 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
         for i in range(len(proxies)):
             ax[i+3].set_xlabel(proxies[i])
             ax[i+3].set_title(proxies[i])
-            ax[i+3].set_ylim([dmax, dmin])
         
         # remove y-axis labels for middle plots if there are more than 2
         if len(proxies)>2:
@@ -448,7 +427,7 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
 
     # Plot housekeeping
     core = AC_t.core
-    fig.suptitle(core+' - '+sec+' - tr='+str(round(tr_a))+'- r='+str(round(r_a)))
+    fig.suptitle('ALHIC2302 Coordinated Sampling')
     ax[0].set_title('AC - Right')
     ax[1].set_title('AC - Top')
     for a in ax:
@@ -457,12 +436,13 @@ def plot_script(core,sec,tr_a,r_a,data,proxies,res):
     plt.subplots_adjust(wspace=0)
 
     # add colorbar (width fixed to first two subplots)
-    ACcbar_ax = fig.add_axes([ax[0].get_position().x0,-0.05,ax[1].get_position().x1-ax[0].get_position().x0,0.05])
-    ACnorm = matplotlib.colors.Normalize(vmin=ACpltmin,vmax=ACpltmax)
-    ACcbar = fig.colorbar(matplotlib.cm.ScalarMappable(norm=ACnorm, cmap=my_cmap),cax=ACcbar_ax,
+    if sec =='159_3':
+        ACcbar_ax = fig.add_axes([ax[0].get_position().x0,-0.05,ax[1].get_position().x1-ax[0].get_position().x0,0.05])
+        ACnorm = matplotlib.colors.Normalize(vmin=ACpltmin,vmax=ACpltmax)
+        ACcbar = fig.colorbar(matplotlib.cm.ScalarMappable(norm=ACnorm, cmap=my_cmap),cax=ACcbar_ax,
                     orientation='horizontal',label='Current (normalized)')
 
-    return fig
+    return fig, ax
 
 #%% 
 # Loop through and plot (just endpoints)
@@ -475,140 +455,54 @@ if make_singles:
     # set resolution (0 is default of measurment resolution)
     res = 0.002
 
-    prox_combos = [['d18O','Liquid Conductivity','Dust Concentration'],
-                   ['d18O','dD','dxs','dln'],
-                   ['d18O','Ar_Age_kyr'],
-                   ['d18O','Ar_Age_kyr','CO2','CH4']]
-    prox_combos = [['d18O','Dust Concentration','Fe','Mg','Ca','Na','K']]
-    
+    prox_combos = [['d18O','Ar_Age_kyr'],['d18O','Dust Concentration','Mg','Fe','Ca']]
+
     for proxies in prox_combos:
 
         print("    Running Proxies: "+str(proxies))
+
+        # Actually make figure (sized for number of proxies to plot)
+        ratios = [3,3]
+        numplots=2
+        if len(proxies)>0:
+            ratios.append(1.5)
+            numplots=3+len(proxies)
+        for i in range(len(proxies)):
+            ratios.append(2.5)
+        fig, ax = plt.subplots(1, numplots,figsize=(8+len(proxies)*3,16),gridspec_kw={'width_ratios': ratios},dpi=100)
+        for a in ax:
+            a.set_ylim([130.4,126.2])
+
+
         
         # loop through sections
         for sec in unique(sections):
 
-            # set angles to run
-            #tr_angle = [0,0,float(df.at[sec,'AC-tr-mean-angle']),float(df.at[sec,'AC-tr-mean-angle'])]
-            #r_angle = [0,float(df.at[sec,'AC-r-mean-angle']),0,float(df.at[sec,'AC-r-mean-angle'])]
-            if sec == '230_4':
-                tr_angle = [0,top_230_4]
-                r_angle = [0,right_230_4]
-                core = 'alhic1901'
-            else:
-                tr_angle = [0,float(df.at[sec,'AC-tr-mean-angle'])]
-                r_angle = [0,float(df.at[sec,'AC-r-mean-angle'])]
-                core = 'alhic2302'
+
+            tr_angle = [float(df.at[sec,'AC-tr-mean-angle'])]
+            r_angle = [float(df.at[sec,'AC-r-mean-angle'])]
+            core = 'alhic2302'
 
             if sec == '158':
-                tr_angle = [0,-50]
-                r_angle = [0,0]
+                tr_angle = [-50]
+                r_angle = [0]
             
-            for tr_a, r_a in zip(tr_angle,r_angle):
-
-                # print update
-                print("        Running Section "+sec+' - tr='+str(round(tr_a))+' - r='+str(round(r_a)))
-                
-                # run plot script
-                fig = plot_script(core,sec,tr_a,r_a,data,proxies,res)
-                
-                #save figure
-                prox = ''
-                for p in proxies:
-                    prox += '-'+p
-                fname = path_to_figures +sec+'/'+'alhic2302-'+sec+'-tr='+str(round(tr_a))+'-r='+str(round(r_a))+prox+'.png'
-                fig.savefig(fname,bbox_inches='tight')
-                plt.close(fig)
-
-#%% 
-# Make some annimations
-
-if make_annimations:
-
-    # print update
-    print("Plotting Annimations")
-
-    # Specify proxies to plot
-    proxies=['d18O','dD','dxs']
-
-    # set resolution
-    res = 0.005
-
-        # loop through sections
-    for sec in unique(sections):
-
-        if sec == '230_4':
-            core = 'alhic1901'
-        else:
-            core = 'alhic2302'
-
-        # set folder path
-        folder_path = path_to_annimations+'/'+sec+'/'
-
-        # print update
-        print("    Running Section "+sec)
-
-        # delete files in folder
-        png_files = glob.glob(os.path.join(folder_path, "*.png"))
-        # Loop through the list of .png files and delete each one
-        for file_path in png_files:
-            try:
-                os.remove(file_path)
-                print(f"Deleted: {file_path}")
-            except Exception as e:
-                print(f"Error deleting {file_path}: {e}")
-
-        # set counter
-        fig_cnt = 1
-        
-        # make vectors of tr angles and r angles
-        angle_res = 0.4
-        if sec == '230_4':
-            tr_final = top_230_4
-            r_final = right_230_4
-            core = 'alhic1901'
-        else:
-            tr_final = float(df.at[sec,'AC-tr-mean-angle'])
-            r_final = float(df.at[sec,'AC-r-mean-angle'])
-            core = 'alhic2302'
-
-        if sec == '158':
-            tr_final = -50
-            r_final = 0
-
-        phase1_cnt = round(abs(r_final/angle_res))+1
-        phase2_cnt = round(abs(tr_final/angle_res))+1
-        tr_angle = np.concatenate((np.zeros(phase1_cnt),np.linspace(0,tr_final,phase2_cnt)))
-        r_angle = np.concatenate((np.linspace(0,r_final,phase1_cnt),np.ones(phase2_cnt)*r_final))
-        
-        # loop through angles
-        for tr_a, r_a in zip(tr_angle,r_angle):
+            tr_a = tr_angle[0]
+            r_a = r_angle[0]
 
             # print update
-            print("        Plotting subplot "+str(fig_cnt)+" of "+str(len(tr_angle)))
+            print("        Running Section "+sec+' - tr='+str(round(tr_a))+' - r='+str(round(r_a)))
+        
+            fig,ax = plot_script(core,sec,tr_a,r_a,data,proxies,res,fig,ax)
             
-            # run plot script
-            fig = plot_script(core,sec,tr_a,r_a,data,proxies,res)
-            
-            #save figure
-            fname = path_to_annimations+sec+'/alhic2302-'+sec+'-'+str(fig_cnt)+'.png'
-            fig.savefig(fname,bbox_inches='tight')
-            plt.close(fig)
+        #save figure
+        prox = ''
+        for p in proxies:
+            prox += '-'+p
+        fname = path_to_figures +'alhic2302-bigplot-'+prox+'.png'
 
-            # increment counter
-            fig_cnt += 1
+        fig.savefig(fname,bbox_inches='tight')
+        plt.close(fig)
 
-        # make movie
- 
-        def get_png_files(folder_path):
-            return [file for file in os.listdir(folder_path) if file.endswith('.png')]
-
-        image_names = get_png_files(folder_path)
-        image_names = sorted(image_names, key=lambda x: int(re.findall(r'\d+', x)[-1]))
-        image_files = [os.path.join(folder_path,img)
-                    for img in image_names]
-        clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(image_files,fps=30)
-        clip = ensure_even_dimensions(clip)
-        clip.write_videofile(folder_path+sec+'_movie.mp4',fps=12)
 
 # %%

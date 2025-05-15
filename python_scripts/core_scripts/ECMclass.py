@@ -54,6 +54,8 @@ class ECM:
         self.y_vec = np.unique(self.y)
         if 'button_raw' in raw.columns:
             self.button_raw = raw['button_raw'].to_numpy()
+        else:
+            self.button_raw = None
             
         # remove tracks that are incomplete
         lenth = []

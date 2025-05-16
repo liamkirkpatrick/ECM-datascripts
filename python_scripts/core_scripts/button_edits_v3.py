@@ -117,14 +117,6 @@ def process_ecm(d):
         cnt += 1
     ax_right.legend(title='Y_dimension(mm)', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
 
-
-    # current_y = y_values[0]
-    # for yv, line in lines.items():
-    #     line.set_linewidth(0.5)
-    #     line.set_zorder(1)
-    # lines[current_y].set_linewidth(4)
-    # lines[current_y].set_zorder(2)
-
     # plot button points
     df_but = df_s.copy()
     mask = df_but['Button'] == 0

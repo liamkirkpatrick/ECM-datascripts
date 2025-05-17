@@ -36,7 +36,6 @@ from ECMclass import ECM
 path_to_data = '../../data/'
 path_to_angles = '../../data/angles/'
 metadata_file = 'metadata.csv'
-path_to_angles = '../../data/angles'
 
 # smoothing window
 window = 10
@@ -235,7 +234,8 @@ def compute_dip_angles(data,sections,core):
                     
                     # check each track is not crazy long (all button is 100m)
                     if ((depth_max[i]-depth_min[i])<2
-                        and (depth_max[j]-depth_min[j])<2):
+                        and (depth_max[j]-depth_min[j])<2
+                        and abs(y_vec[i]-y_vec[j]) > 5):
                         
                         if scnt==0 and False:
                             print('Tracks '+str(i)+' and '+str(j))

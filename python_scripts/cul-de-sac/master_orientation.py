@@ -223,6 +223,7 @@ def compute_dip_angles(data,sections,core):
         print("    calc dip angle")
         corr_coef=np.zeros((len(slopes),len(y_vec)**2)) * np.NaN
         length_array=np.zeros((len(slopes),len(y_vec)**2)) * np.NaN
+        y_offset_array=np.zeros((len(slopes),len(y_vec)**2)) * np.NaN
         scnt = 0
         for s in slopes:
             
@@ -234,7 +235,7 @@ def compute_dip_angles(data,sections,core):
                     
                     # check each track is not crazy long (all button is 100m)
                     if ((depth_max[i]-depth_min[i])<2
-                        and (depth_max[j]-depth_min[j])<2
+                        and (depth_max[j]-depth_min[j])<2 #):
                         and abs(y_vec[i]-y_vec[j]) > 5):
                         
                         if scnt==0 and False:
@@ -262,6 +263,7 @@ def compute_dip_angles(data,sections,core):
                                 result = stats.pearsonr(track1_meas[track1_idx],track2_meas[track2_idx])
                                 corr_coef[scnt,len(y_vec)*i+j] = result.statistic
                                 length_array[scnt,len(y_vec)*i+j] = depth_max[i]-depth_min[i]
+                                y_offset_array[scnt,len(y_vec)*i+j] = y_vec[j]-y_vec[i]
             scnt+=1
         
             
@@ -271,11 +273,14 @@ def compute_dip_angles(data,sections,core):
         angle=[]
         score = []
         length = []
+        y_offset = []
+
         for i in idx:
             maxidx = np.argmax(corr_coef[:,i])
             angle.append(test_angle[maxidx])
             score.append(corr_coef[maxidx,i])
             length.append(length_array[maxidx,i])
+            y_offset.append(y_offset_array[maxidx,i])
     
             icnt+=1
         
@@ -286,14 +291,16 @@ def compute_dip_angles(data,sections,core):
         angle_rowname = d.ACorDC + '-'+d.face + '-angles'
         score_rowname = d.ACorDC + '-'+d.face + '-scores'
         length_rowname = d.ACorDC + '-'+d.face + '-length'
+        y_offset_rowname = d.ACorDC + '-'+d.face + '-y_offset'
         if angle_rowname not in df.columns:
             df[angle_rowname] = None
             df[score_rowname] = None
             df[length_rowname] = None
+            df[y_offset_rowname] = None
         df.at[sec_idx, angle_rowname] = angle
         df.at[sec_idx, score_rowname] = score
         df.at[sec_idx, length_rowname] = length
-        
+        df.at[sec_idx, y_offset_rowname] = y_offset
         
         # increment counter
         dcnt+=1
@@ -318,12 +325,13 @@ for index,row in meta.iterrows():
     section = row['section']
     section_num = section.split("_")
     face = row['face']
+    ACorDC = row['ACorDC']
     
-    if core == 'alhic2401':
+    if core == 'alhic2401' and ACorDC == 'AC':
         
         face = row['face']
-        ACorDC = row['ACorDC']
-        
+
+    
         print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
     
         data_item = ECM(core,section,face,ACorDC)
@@ -342,7 +350,7 @@ for index,row in meta.iterrows():
 compute_dip_angles(data,sections,'alhic2401')
 
 #%% 
-# Read in metadata and import data - ALHIC2201
+# Read in metadata and import data - ALHIC2416
 
 # import each script as an ECM class item
 data = []

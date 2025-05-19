@@ -230,19 +230,19 @@ for index,row in meta.iterrows():
     
     to_run = ['158']
 
-    if core == 'alhic2302':
+    if core == 'alhic2416':
     #if core == 'pico2303':
         
         
-        if section in to_run and ACorDC == 'AC' and (face == 'r' or face == 'tr'):
+        #if section in to_run and ACorDC == 'AC' and (face == 'r' or face == 'tr'):
 
-            print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
-            
-            data_item = ECM(core,section,face,ACorDC)
-            
-            #if max(data_item.depth) < 47 and min(data_item.depth)>3:
-            data_item.smooth(window)
-            data.append(data_item)
+        print("Reading "+core+", section "+section+'-'+face+'-'+ACorDC)
+        
+        data_item = ECM(core,section,face,ACorDC)
+        
+        #if max(data_item.depth) < 47 and min(data_item.depth)>3:
+        data_item.smooth(window)
+        data.append(data_item)
 
 #launch gui
 layout = make_gui()
@@ -271,6 +271,8 @@ for d in data:
     # Loop through each track
     ycnt = 0
     for ycurr in d.y_vec:
+        
+        
         
         # update current track
         window['-TRACK-'].update(str(ycnt+1)+' of '+str(len(d.y_vec)))
@@ -304,14 +306,18 @@ for d in data:
         fig = makeplot(ymin,lmin,lmax,xmin,xmax,d_window,d,ycurr,df)
         tkcanvas = draw_figure(window['-CANVAS-'].TKCanvas, fig)
         
+        
+        
         while True:
+            
+            
             # read if button is pressed
             event, values = window.read(timeout=15)
         
             
+            
             # activate button click
             cid = fig.canvas.mpl_connect('button_press_event', onclick)
-            
 
             # check for quit
             if event in (sg.WIN_CLOSED, 'Quit'):
@@ -444,6 +450,8 @@ for d in data:
             break
     
         ycnt+=1
+    
+    
     
     
     # Adjust column

@@ -157,7 +157,7 @@ def interp_onto_shifted(shifted_depth,depth,slopes,meas,y_vec,y_list,interp_int,
                 interp_meas_slope.append(np.interp(grid,np.flip(track_shifted),np.flip(meas[idx])))
                 interp_depth_slope.append(grid)
                 
-                if grid_min >= depth_min[ycnt]:
+                if grid_min >= depth_min[ycnt]: #YCNT ASSIGNMENT ERROR
                     depth_min[ycnt] = grid_min
                 if grid_max <= depth_max[ycnt]:
                     depth_max[ycnt] = grid_max
@@ -219,6 +219,10 @@ def compute_dip_angles(data,sections,core):
                                                         slopes,meas,y_vec,y_list,
                                                         interp_int,button)
         
+        # print depth_min and depth_max
+        #print(depth_min)
+        #print(depth_max)
+        
         # calc dip angle
         print("    calc dip angle")
         corr_coef=np.zeros((len(slopes),len(y_vec)**2)) * np.NaN
@@ -246,6 +250,7 @@ def compute_dip_angles(data,sections,core):
                         dmin = max([depth_min[i],depth_min[j]])+0.0010001
                         dmax = min([depth_max[i],depth_max[j]])-0.0009999
 
+
                         # ensure there is significant overlap
                         if dmax-dmin>0.3:
                             
@@ -262,7 +267,7 @@ def compute_dip_angles(data,sections,core):
                             else:
                                 result = stats.pearsonr(track1_meas[track1_idx],track2_meas[track2_idx])
                                 corr_coef[scnt,len(y_vec)*i+j] = result.statistic
-                                length_array[scnt,len(y_vec)*i+j] = depth_max[i]-depth_min[i]
+                                length_array[scnt,len(y_vec)*i+j] = dmax - dmin #depth_max[i]-depth_min[i]
                                 y_offset_array[scnt,len(y_vec)*i+j] = y_vec[j]-y_vec[i]
             scnt+=1
         
